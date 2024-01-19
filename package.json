@@ -1,6 +1,6 @@
 {
   "name": "com.unity.cloud.draco",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "displayName": "Draco for Unity",
   "description": "Use Draco for Unity to apply Draco compression to meshes, import Draco files and load Draco data at runtime. Draco is an open-source library for compressing and decompressing 3D geometric meshes and point clouds. It is intended to improve the storage and transmission of 3D graphics.",
   "unity": "2020.3",
@@ -37,17 +37,17 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.cloud.draco.tests": "5.0.0"
+    "com.unity.cloud.draco.tests": "5.0.1"
   },
   "_upm": {
-    "changelog": "### Added\n- Support for efficient self-managed encoding of multiple meshes. Users may use the advanced Mesh API to acquire readable mesh data for multiple meshes at once and pass the data on to new `DracoEncoder.EncodeMesh` overloads that accept said `MeshData`.\n- Vertex attributes information (draco identifier and dimensions) was added to `EncodeResult`\n- Support for iOS simulator\n- Support for Windows ARM64 architecture.\n- Support for Android x86_64\n- Package samples\n  - *Draco Decoding*. Demonstrates how to decode Draco data at runtime.\n  - *Draco Encoding*. Demonstrates how to encode Draco data at runtime.\n  - *Scene/GameObject Encoding/Decoding via Menu*. Encode Meshes, GameObjects or entire Scenes via the Tools and Assets menu and have them decoded when the scene loads.\n- Support for decoding generic Draco attributes into arbitrary Unity vertex attributes (e.g. tangents) via [`DecodeMesh`](xref:Draco.DracoDecoder.DecodeMesh*)'s `attributeIdMap` parameter.\n\n### Changed\n- Decoding API was refactored and harmonized with encoding. The main entry point now is [`DracoDecoder.DecodeMesh`](xref:Draco.DracoDecoder.DecodeMesh*).\n  - [`decodeSettings`](xref:Draco.DecodeSettings) parameter encapsulates decode related settings.\n  - `attributeIdMap` parameter allows Draco attribute identifier to Unity vertex attribute assignment.\n- Encoding API was refactored and now utilizes [`QuantizationSettings`](xref:Draco.Encode.QuantizationSettings) and [`SpeedSettings`](xref:Draco.Encode.SpeedSettings).\n- Much faster encoding due to the use of the C# Job System (threads)\n- Faster encoding due to avoiding a full memory copy of the result\n- All encoding methods are async now\n- Readonly meshes now can be encoded in the Editor\n- Removed Editor-only `sync` parameter from `DracoMeshLoader.ConvertDracoMeshToUnity` to make API stable (regardless of environment/scripting defines)\n- WebGL native libraries are now installed via sub-packages\n- Minimum required Unity version was decreased to 2020.3 (possible because the WebGL version restriction was lifted with the sub-packages)\n- Automatic code formatting was applied to all source files\n- Consolidated split libraries into a single library named `draco_unity`\n- Updated Draco native library binaries to [3.1.0](https://github.com/Unity-Technologies/draco/releases/tag/unity%2F3.1.0)\n- Bumped Burst dependency to version 1.8.11\n- Renamed assembly definition `DracoEditor` to `Draco.Editor`\n- Renamed assembly definition `DracoRuntimeTests` to `Draco.Tests`\n- CI maintenance\n\n### Deprecated\n- `DracoMeshLoader` (in favor of [`DracoDecoder`](xref:Draco.DracoDecoder))\n- `DracoEncoder.EncodeMesh` overloads that have many individual settings parameters instead of [`QuantizationSettings`](xref:Draco.Encode.QuantizationSettings)/[`SpeedSettings`](xref:Draco.Encode.SpeedSettings).\n\n### Removed\n- Obsolete console error about downgrading package for certain Unity versions\n- Menu items under `Tools` -> `Draco`. They can be brought back by installing the *Draco Tools Menu* package sample.\n\n### Fixed\n- WebGL build with Unity 2022 and newer (due to WebGL sub-packages).\n- Destroying temporary copy (instead of original) GameObject when encoding selected GameObject from the menu\n- Reference assembly definitions in `DracoEncoder` by name instead of GUID to avoid package import errors.\n- Decoded mesh's bounds are calculated and returned/set accordingly.\n- Properly dispose NativeArrays in case of error (fixes atteneder/DracoUnity#53)\n- Point clouds' index buffer is properly initialized (fixes atteneder/DracoUnity#64)\n- Properly set root namespace on all assembly definitions\n- Compilation succeeds on non-supported platforms (with no API exposed)\n- Crash in async Editor import"
+    "changelog": "### Fixed\n- Build compiler error about missing \"ConditionalAttribute\""
   },
   "upmCi": {
-    "footprint": "cbd8e9391b2a76f233e2e7db2972d1c9fbcf96df"
+    "footprint": "87503a9abfa47a1f7f4a42abf75bc65b3fccdf79"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.cloud.draco.git",
     "type": "git",
-    "revision": "6bde96acde2fabcfef5f60948e7f3016740f8407"
+    "revision": "9389646cb9b05f510f018ba4dca73b84dd7f4263"
   }
 }
