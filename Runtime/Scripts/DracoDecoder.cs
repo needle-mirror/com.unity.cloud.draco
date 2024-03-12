@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Unity Technologies and the Draco for Unity authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if UNITY_STANDALONE || UNITY_WEBGL || UNITY_IOS || UNITY_ANDROID || UNITY_WSA || UNITY_LUMIN
+#if UNITY_STANDALONE || UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || UNITY_VISIONOS || UNITY_ANDROID || UNITY_WSA || UNITY_LUMIN
 #define DRACO_PLATFORM_SUPPORTED
 #else
 #define DRACO_PLATFORM_NOT_SUPPORTED
@@ -398,8 +398,8 @@ namespace Draco
             return (IntPtr)UnsafeUtility.PinGCArrayAndGetDataAddress(encodedData, out gcHandle);
         }
 
-#if !UNITY_EDITOR
-        [System.Diagnostics.Conditional("DRACO_PLATFORM_NOT_SUPPORTED")]
+#if !UNITY_EDITOR && DRACO_PLATFORM_SUPPORTED
+        [System.Diagnostics.Conditional("FALSE")]
 #endif
         internal static void CertifySupportedPlatform(
 #if UNITY_EDITOR

@@ -24,13 +24,13 @@ namespace Draco
     unsafe class DracoNative
     {
 
-#if !UNITY_EDITOR && (UNITY_WEBGL || UNITY_IOS)
+#if !UNITY_EDITOR && (UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || UNITY_VISIONOS)
         internal const string dracoUnityLib = "__Internal";
 #elif UNITY_ANDROID || UNITY_STANDALONE || UNITY_WSA || UNITY_EDITOR || PLATFORM_LUMIN
         internal const string dracoUnityLib = "draco_unity";
 #else
         // Unsupported platform
-        internal const string dracoUnityLib = "invalid";
+        internal const string dracoUnityLib = "UnsupportedPlatform";
 #endif
 
         public const int maxStreamCount = 4;

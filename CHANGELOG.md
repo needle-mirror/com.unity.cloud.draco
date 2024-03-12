@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] - 2024-03-12
+
+### Added
+- Windows ARM64 Editor support
+- Apple tvOS support
+- Apple visionOS support
+- Web binaries
+
+### Changed
+- Unity version-specific web sub-packages are not required anymore and will be removed automatically from the project upon detection (to avoid linker conflicts during web builds).
+- Removed dummy Editor tests.
+- Updated Google Draco to version 1.5.7.
+- Raised deployment target for iOS and tvOS to 11.0
+
+### Removed
+- Apple iOS 32-bit armv7 architectures
+
+### Fixed
+- Improved error message when using package on unsupported platform.
+
 ## [5.0.2] - 2024-01-30
 
 ### Fixed
@@ -64,7 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Properly dispose NativeArrays in case of error (fixes atteneder/DracoUnity#53)
 - Point clouds' index buffer is properly initialized (fixes atteneder/DracoUnity#64)
 - Properly set root namespace on all assembly definitions
-- Compilation succeeds on non-supported platforms (with no API exposed)
+- Compilation succeeds on non-supported platforms
 - Crash in async Editor import
 
 ## [4.1.0] - 2023-04-14
