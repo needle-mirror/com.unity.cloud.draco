@@ -1,6 +1,6 @@
 {
   "name": "com.unity.cloud.draco",
-  "version": "5.1.1",
+  "version": "5.1.2",
   "displayName": "Draco for Unity",
   "description": "Use Draco for Unity to apply Draco compression to meshes, import Draco files and load Draco data at runtime. Draco is an open-source library for compressing and decompressing 3D geometric meshes and point clouds. It is intended to improve the storage and transmission of 3D graphics.",
   "unity": "2020.3",
@@ -37,17 +37,17 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.cloud.draco.tests": "5.1.1"
+    "com.unity.cloud.draco.tests": "5.1.2"
   },
   "_upm": {
-    "changelog": "### Fixed\n- Compiles on Unity 2023.2 again."
+    "changelog": "### Fixed\n- Error log message about missing meta file for `Runtime/Plugins/x86_64/draco_unity.bundle/Contents/MacOS/draco_unity`\n- Incorrect error message when removing legacy WebGL sub-packages fails.\n- Automatic legacy WebGL sub-package removal can be prevented via `DISABLE_SUB_PACKAGE_LOAD` environment variable in Unity 2020 (fixes timeouts in CI).\n- Corrected vision OS support detection in tests, which fixes compilation across Unity versions."
   },
   "upmCi": {
-    "footprint": "20f28c93be5f6a66a8bf2d97d8d474bf812eac77"
+    "footprint": "3959b1f9f481cc9ef80616ed9a6cd7d2d1dfbed2"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.cloud.draco.git",
     "type": "git",
-    "revision": "bac5aafdac5ac114b7aa11abab5ea4b7c40fe9d7"
+    "revision": "554fd3d32350367a5fc0a5b70a228a08c6d1e4cd"
   }
 }

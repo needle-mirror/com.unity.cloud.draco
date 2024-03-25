@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.2] - 2024-03-25
+
+### Fixed
+- Error log message about missing meta file for `Runtime/Plugins/x86_64/draco_unity.bundle/Contents/MacOS/draco_unity`
+- Incorrect error message when removing legacy WebGL sub-packages fails.
+- Automatic legacy WebGL sub-package removal can be prevented via `DISABLE_SUB_PACKAGE_LOAD` environment variable in Unity 2020 (fixes timeouts in CI).
+- Corrected vision OS support detection in tests, which fixes compilation across Unity versions.
+
 ## [5.1.1] - 2024-03-14
 
 ### Fixed
