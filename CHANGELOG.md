@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.3] - 2024-04-17
+
+### Added
+- Added Apple Privacy Manifest file to `/Plugins` directory.
+
+### Fixed
+- Non-web libraries are properly included/excluded from builds again.
+- Apple iOS/tvOS/visionOS Device/Simulator SDK libraries are correctly included again, even when target SDK is switched during a session.
+
 ## [5.1.2] - 2024-03-25
 
 ### Fixed
