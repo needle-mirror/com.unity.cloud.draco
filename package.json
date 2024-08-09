@@ -1,6 +1,6 @@
 {
   "name": "com.unity.cloud.draco",
-  "version": "5.1.4",
+  "version": "5.1.5",
   "displayName": "Draco for Unity",
   "description": "Use Draco for Unity to apply Draco compression to meshes, import Draco files and load Draco data at runtime. Draco is an open-source library for compressing and decompressing 3D geometric meshes and point clouds. It is intended to improve the storage and transmission of 3D graphics.",
   "unity": "2020.3",
@@ -37,17 +37,17 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.cloud.draco.tests": "5.1.4"
+    "com.unity.cloud.draco.tests": "5.1.5"
   },
   "_upm": {
-    "changelog": "### Added\n- Added Apple Privacy Manifest documentation.\n- XML documentation"
+    "changelog": "### Fixed\n- Error on macOS where the binary is not loaded since Apple cannot check it for malicious software. The binary has been code-signed and notarized."
   },
   "upmCi": {
-    "footprint": "704d88e2c120a349b307212d715aa8417f8adadd"
+    "footprint": "70c8ca5d9e9a9c39b334e696269048ff1971d8ec"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.cloud.draco.git",
     "type": "git",
-    "revision": "933f3697b4db7b3b26f7b14b154a1f9351f5398f"
+    "revision": "c4e5490956cd99193dc83c800f0668b772d0bf2d"
   }
 }
