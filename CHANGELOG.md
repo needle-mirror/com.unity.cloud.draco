@@ -4,10 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.7] - 2024-10-01
+
+### Changed
+- Updated macOS binary to version 3.2.4
+
+### Fixed
+- macOS binary now properly signed, notarized and stapled.
+
 ## [5.1.6] - 2024-09-06
+
+### Changed
+- Updated macOS binary to version 3.2.3
 
 ### Fixed
 - Avoid exceeding allocation lifetime of 4 frames by consistently allocating NativeArrays persistent or temporary based on vertex count everywhere (fixes [#704](https://github.com/atteneder/glTFast/issues/704)).
+- Code signing error on upload to Mac Apple Store (fixes [#78](https://github.com/atteneder/DracoUnity/issues/78))
 
 ## [5.1.5] - 2024-08-09
 
