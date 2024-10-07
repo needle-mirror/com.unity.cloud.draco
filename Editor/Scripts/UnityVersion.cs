@@ -17,7 +17,7 @@ namespace Draco.Editor
         public readonly int Sequence;
 
 
-        const string k_Pattern = @"^(?<major>0|[1-9]\d*)(\.(?<minor>0|[1-9]\d*))?(\.(?<patch>0|[1-9]\d*))?(?<type>[abf])?(?<sequence>0|[1-9]\d*)?$";
+        const string k_Pattern = @"^(?<major>0|[1-9]\d*)(\.(?<minor>0|[1-9]\d*))?(\.(?<patch>0|[1-9]\d*))?(?<type>[abf])?(?<sequence>0|[1-9]\d*)?";
 
         static readonly Regex k_Regex = new Regex(k_Pattern, RegexOptions.CultureInvariant, TimeSpan.FromMinutes(1));
 
