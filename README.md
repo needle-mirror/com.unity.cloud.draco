@@ -1,14 +1,13 @@
 # Draco for Unity
 
-[![codecov](https://codecov.unity3d.com/ghe/unity/com.unity.cloud.draco/graph/badge.svg?token=1ZD3ZN3WRC)](https://codecov.unity3d.com/ghe/unity/com.unity.cloud.draco)
-
 Unity package that integrates the [Draco 3D data compression library][draco] within Unity.
 
 ## Installing
 
 [Installation instructions](./Documentation~/installation.md)
 
-> **NOTE:** This package originally had the identifier `com.atteneder.draco`. Consult the [upgrade guide](./Documentation~/upgrade-guide.md#unity-fork) to learn how to switch to the Unity version (`com.unity.cloud.draco`) or [install the original package](./Documentation~/original.md).
+> [!NOTE]
+> This package originally had the identifier `com.atteneder.draco`. Consult the [upgrade guide](./Documentation~/upgrade-guide.md#unity-fork) to learn how to switch to the Unity version (`com.unity.cloud.draco`) or [install the original package](./Documentation~/original.md).
 
 ### Build Draco library
 
@@ -34,7 +33,7 @@ limitations under the License.
 
 ## Third party notice
 
-See [THIRD PARTY NOTICES.md](THIRD PARTY NOTICES.md)
+See [THIRD PARTY NOTICES.md](THIRD%20PARTY%20NOTICES.md)
 
 ## Trademarks
 

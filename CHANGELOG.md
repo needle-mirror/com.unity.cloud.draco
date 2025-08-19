@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2025-08-19
+
+### Added
+- Loading Draco data from [NativeArray&lt;byte&gt;.ReadOnly](xref:Unity.Collections.NativeArray`1.ReadOnly). This makes it easier to load KTX data from existing, native memory directly without the need to create a copy in managed memory (e.g. by using [DownloadHandler.GetNativeData](xref:UnityEngine.Networking.DownloadHandler.GetNativeData) or [ConvertExistingDataToNativeArray](xref:Unity.Collections.LowLevel.Unsafe.NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray(System.Void*,System.Int32,Unity.Collections.Allocator))).
+  - [DecodeMesh(MeshData, ReadOnly)](xref:Draco.DracoDecoder.DecodeMesh(UnityEngine.Mesh.MeshData,Unity.Collections.NativeArray{System.Byte}.ReadOnly))
+  - [DecodeMesh(MeshData, ReadOnly, DecodeSettings)](xref:Draco.DracoDecoder.DecodeMesh(UnityEngine.Mesh.MeshData,Unity.Collections.NativeArray{System.Byte}.ReadOnly,Draco.DecodeSettings))
+  - [DecodeMesh(MeshData, ReadOnly, DecodeSettings, Dictionary&lt;VertexAttribute, int&gt;)](xref:Draco.DracoDecoder.DecodeMesh(UnityEngine.Mesh.MeshData,Unity.Collections.NativeArray{System.Byte}.ReadOnly,Draco.DecodeSettings,Dictionary{UnityEngine.Rendering.VertexAttribute,System.Int32}))
+  - [DecodeMesh(ReadOnly)](xref:Draco.DracoDecoder.DecodeMesh(Unity.Collections.NativeArray{System.Byte}.ReadOnly))
+  - [DecodeMesh(ReadOnly, DecodeSettings)](xref:Draco.DracoDecoder.DecodeMesh(Unity.Collections.NativeArray{System.Byte}.ReadOnly,Draco.DecodeSettings))
+  - [DecodeMesh(ReadOnly, DecodeSettings, Dictionary&lt;VertexAttribute, int&gt;)](xref:Draco.DracoDecoder.DecodeMesh(Unity.Collections.NativeArray{System.Byte}.ReadOnly,Draco.DecodeSettings,Dictionary{UnityEngine.Rendering.VertexAttribute,System.Int32}))
+- Test project `DracoText`
+
+### Changed
+- Increased minimum required Unity 2021 xLTS (2021.3.46f1).
+- Changed source code repository structure to [monorepo](https://en.wikipedia.org/wiki/Monorepo).
+- Updated Unity Draco binaries to version 3.3.0 (based on draco 1.5.7).
+
+### Deprecated
+- Decode methods that accept NativeSlice.
+  - [DecodeMesh(NativeSlice&lt;byte&gt;)](xref:Draco.DracoDecoder.DecodeMesh(Unity.Collections.NativeSlice{System.Byte}))
+  - [DecodeMesh(NativeSlice&lt;byte&gt;, DecodeSettings)](xref:Draco.DracoDecoder.DecodeMesh(Unity.Collections.NativeSlice{System.Byte},Draco.DecodeSettings))
+  - [DecodeMesh(NativeSlice&lt;byte&gt;, DecodeSettings, Dictionary&lt;VertexAttribute, int&gt;)](xref:Draco.DracoDecoder.DecodeMesh(Unity.Collections.NativeSlice{System.Byte},Draco.DecodeSettings,Dictionary{UnityEngine.Rendering.VertexAttribute,System.Int32}))
+  - [DecodeMesh(MeshData, NativeSlice&lt;byte&gt;)](xref:Draco.DracoDecoder.DecodeMesh(UnityEngine.Mesh.MeshData,Unity.Collections.NativeSlice{System.Byte}))
+  - [DecodeMesh(MeshData, NativeSlice&lt;byte&gt;, DecodeSettings)](xref:Draco.DracoDecoder.DecodeMesh(UnityEngine.Mesh.MeshData,Unity.Collections.NativeSlice{System.Byte},Draco.DecodeSettings))
+  - [DecodeMesh(MeshData, NativeSlice&lt;byte&gt;, DecodeSettings, Dictionary&lt;VertexAttribute, int&gt;)](xref:Draco.DracoDecoder.DecodeMesh(UnityEngine.Mesh.MeshData,Unity.Collections.NativeSlice{System.Byte},Draco.DecodeSettings,Dictionary{UnityEngine.Rendering.VertexAttribute,System.Int32}))
+
+### Fixed
+- Android binary is 16kB page size compatible (fixes [#79](https://github.com/atteneder/DracoUnity/issues/79)).
+- Linux binary is now compatible with Ubuntu 20.04.
+- Multiple XML-documentation issues.
+- (Test) Properly dispose UnityWebRequests used in unit tests.
+
+### Removed
+- Support for Unity 2020 LTS and 2021 LTS (Note: 2021 xLTS is still supported).
+- Prevention of automatic legacy WebGL sub-package removal via `DISABLE_SUB_PACKAGE_LOAD` environment variable (were required for Unity 2020 timeouts in CI).
+- (CI) SonarQube scan job.
+
 ## [5.1.8] - 2024-10-07
 
 ### Fixed

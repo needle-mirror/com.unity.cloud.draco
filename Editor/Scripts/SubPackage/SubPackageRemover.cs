@@ -28,13 +28,6 @@ namespace SubPackage
         [InitializeOnLoadMethod]
         static async Task TryRemoveObsoleteSubPackagesAsync()
         {
-#if UNITY_2020
-            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISABLE_SUB_PACKAGE_LOAD")))
-            {
-                Debug.Log($"{k_PackageName} WebGL sub-package removal: Skipped due to environment variable DISABLE_SUB_PACKAGE_LOAD.");
-                return;
-            }
-#endif
             try
             {
                 var installedPackages = await GetAllInstalledPackagesAsync();
@@ -47,7 +40,7 @@ namespace SubPackage
                     var packagesToRemove = subPackages
                         .Select(p => p.name);
 
-                    await RemovePackagesAsync(packagesToRemove);
+                    await AddAndRemoveAsync(packagesToRemove.ToArray());
                 }
             }
             catch (Exception e)
@@ -58,22 +51,9 @@ namespace SubPackage
             }
         }
 
-        static async Task RemovePackagesAsync(IEnumerable<string> remove)
-        {
-#if UNITY_2021_2_OR_NEWER
-            await AddAndRemoveAsync(remove.ToArray());
-#else
-            foreach (var package in remove)
-            {
-                await RemoveAsync(package);
-            }
-#endif
-        }
-
-#if UNITY_2021_2_OR_NEWER
         static async Task AddAndRemoveAsync(string[] remove)
         {
-            var result = Client.AddAndRemove(new string[] {}, remove);
+            var result = Client.AddAndRemove(new string[] { }, remove);
 
             while (!result.IsCompleted)
                 await Yield();
@@ -81,29 +61,6 @@ namespace SubPackage
             if (result.Status != StatusCode.Success)
                 Debug.LogError(result.Error.message);
         }
-#else
-
-        static async Task RemoveAsync(string package, double timeout = 60)
-        {
-            var startTime = EditorApplication.timeSinceStartup;
-            var result = Client.Remove(package);
-
-            while (!result.IsCompleted && EditorApplication.timeSinceStartup - startTime <= timeout)
-            {
-                await Yield();
-            }
-
-            if (!result.IsCompleted || result.Status != StatusCode.Success)
-            {
-                Debug.LogError(k_ErrorMessage);
-
-                if (result.Status != StatusCode.Success)
-                {
-                    Debug.LogError(result.Error.message);
-                }
-            }
-        }
-#endif
 
         static async Task<List<PackageInfo>> GetAllInstalledPackagesAsync(double timeout = 60)
         {

@@ -7,7 +7,7 @@ namespace Draco
 {
     /// <summary>
     /// GeometryAttribute::Type as defined in
-    /// <see href="https://github.com/google/draco/blob/9f856abaafb4b39f1f013763ff061522e0261c6f/src/draco/attributes/geometry_attribute.h#L46">geometry_attribute.h</see>
+    /// <a href="https://github.com/google/draco/blob/9f856abaafb4b39f1f013763ff061522e0261c6f/src/draco/attributes/geometry_attribute.h#L46">geometry_attribute.h</a>
     /// </summary>
     public enum AttributeType
     {
@@ -24,7 +24,7 @@ namespace Draco
         /// <summary>
         /// GeometryAttribute::Type::GENERIC.
         /// A special id used to mark attributes that are not assigned to any known predefined use case.
-        /// Such attributes are often used for a shader specific data.
+        /// Such attributes are often used for shader-specific data.
         /// </summary>
         Generic,
 
