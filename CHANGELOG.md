@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2025-10-15
+
+### Added
+- Embedded Linux support
+- Release process documentation.
+- [EditorConfig](https://editorconfig.org/) for keeping a consistent code-style.
+- (CI) Raspberry Pi runtime tests.
+- (Test) Package coherence tests.
+- (Test) Bone-weight decoding tests.
+- (Test) Importer tests.
+
+### Changed
+- Dependency version changes (to match the recommended version in Unity 2021 xLTS):
+  - com.unity.mathematics decreased to 1.2.6.
+  - com.unity.burst increased to 1.8.24.
+- (CI) Code format check is performed by dotnet format now.
+
+### Fixed
+- Removed warning about Android binaries not being 16kB-aligned.
+- (CI) Apply code format checks on tests package as well.
+- Required Unity version in the documentation.
+- Mesh bounds are consistently applied.
+- Bone weight data is consistently applied and disposed.
+- Don't attempt to recalculate normals and tangents on point clouds.
+
 ## [5.2.0] - 2025-08-19
 
 ### Added

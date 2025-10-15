@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Unity Technologies and the Draco for Unity authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if UNITY_STANDALONE || UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || UNITY_VISIONOS || UNITY_ANDROID || UNITY_WSA || UNITY_LUMIN
+#if UNITY_STANDALONE || UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || UNITY_VISIONOS || UNITY_ANDROID || UNITY_WSA || UNITY_LUMIN || PLATFORM_EMBEDDED_LINUX
 #define DRACO_PLATFORM_SUPPORTED
 #else
 #define DRACO_PLATFORM_NOT_SUPPORTED
@@ -356,23 +356,7 @@ namespace Draco
             }
             var unityMesh = new Mesh();
             Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, unityMesh, defaultMeshUpdateFlags);
-            if (result.boneWeightData != null)
-            {
-                result.boneWeightData.ApplyOnMesh(unityMesh);
-                result.boneWeightData.Dispose();
-            }
-
-            if (unityMesh.GetTopology(0) == MeshTopology.Triangles)
-            {
-                if (result.calculateNormals)
-                {
-                    unityMesh.RecalculateNormals();
-                }
-                if ((decodeSettings & DecodeSettings.RequireTangents) != 0)
-                {
-                    unityMesh.RecalculateTangents();
-                }
-            }
+            ApplyAndDisposeDecodeResult(unityMesh, result, decodeSettings);
             return unityMesh;
         }
 
@@ -481,18 +465,30 @@ namespace Draco
             }
             var unityMesh = new Mesh();
             Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, unityMesh, defaultMeshUpdateFlags);
-            unityMesh.bounds = result.bounds;
-            if (result.calculateNormals)
-            {
-                unityMesh.RecalculateNormals();
-            }
-            if ((decodeSettings & DecodeSettings.RequireTangents) != 0)
-            {
-                unityMesh.RecalculateTangents();
-            }
+            ApplyAndDisposeDecodeResult(unityMesh, result, decodeSettings);
             return unityMesh;
         }
 
+        static void ApplyAndDisposeDecodeResult(Mesh unityMesh, DecodeResult result, DecodeSettings decodeSettings)
+        {
+            unityMesh.bounds = result.bounds;
+            if (result.boneWeightData != null)
+            {
+                result.boneWeightData.ApplyOnMesh(unityMesh);
+                result.boneWeightData.Dispose();
+            }
+            if (unityMesh.GetTopology(0) == MeshTopology.Triangles)
+            {
+                if (result.calculateNormals)
+                {
+                    unityMesh.RecalculateNormals();
+                }
+                if ((decodeSettings & DecodeSettings.RequireTangents) != 0)
+                {
+                    unityMesh.RecalculateTangents();
+                }
+            }
+        }
 
         static async Task<DecodeResult> DecodeMesh(
             Mesh.MeshData meshData,

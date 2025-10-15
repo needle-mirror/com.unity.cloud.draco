@@ -12,10 +12,11 @@
 - macOS (Apple Silicon and Intel)
 - Linux (64 bit)
 - Lumin / Magic Leap
+- Embedded Linux
 
 ## Compatibility
 
-The *Draco for Unity* package is compatible with Unity version of 2020.3 or later.
+The *Draco for Unity* package is compatible with Unity version of 2021.3.46f1 or later.
 
 ## Troubleshooting
 

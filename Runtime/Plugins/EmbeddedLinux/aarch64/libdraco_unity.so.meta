@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 4dbcf225a12fe4435a096b861fbd9ca3
+guid: 6991823885c7243c6b3c2b737b87be35
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -16,10 +16,12 @@ PluginImporter:
     second:
       enabled: 0
       settings:
-        Exclude Android: 0
+        Exclude Android: 1
         Exclude Editor: 1
+        Exclude EmbeddedLinux: 0
         Exclude Linux64: 1
         Exclude OSXUniversal: 1
+        Exclude QNX: 1
         Exclude WebGL: 1
         Exclude Win: 1
         Exclude Win64: 1
@@ -27,10 +29,9 @@ PluginImporter:
   - first:
       Android: Android
     second:
-      enabled: 1
+      enabled: 0
       settings:
-        CPU: x86
-        Is16KbAligned: false
+        Is16KbAligned: true
   - first:
       Any: 
     second:
@@ -45,50 +46,42 @@ PluginImporter:
         DefaultValueInitialized: true
         OS: AnyOS
   - first:
-      Facebook: Win
+      EmbeddedLinux: EmbeddedLinux
     second:
-      enabled: 0
+      enabled: 1
       settings:
-        CPU: AnyCPU
+        CPU: Arm64
   - first:
-      Facebook: Win64
+      QNX: QNX
     second:
       enabled: 0
       settings:
-        CPU: AnyCPU
+        CPU: Arm64
+        SDK: Neutrino71
   - first:
       Standalone: Linux64
     second:
       enabled: 0
       settings:
-        CPU: AnyCPU
+        CPU: None
   - first:
       Standalone: OSXUniversal
     second:
       enabled: 0
       settings:
-        CPU: AnyCPU
+        CPU: None
   - first:
       Standalone: Win
     second:
       enabled: 0
       settings:
-        CPU: AnyCPU
+        CPU: None
   - first:
       Standalone: Win64
     second:
       enabled: 0
       settings:
-        CPU: AnyCPU
-  - first:
-      iPhone: iOS
-    second:
-      enabled: 0
-      settings:
-        AddToEmbeddedBinaries: false
-        CPU: AnyCPU
-        CompileFlags: 
-        FrameworkDependencies: 
+        CPU: None
   userData: 
   assetBundleName: 
   assetBundleVariant: 

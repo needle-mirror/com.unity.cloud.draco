@@ -26,7 +26,7 @@ namespace Draco
 
 #if !UNITY_EDITOR && (UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || UNITY_VISIONOS)
         internal const string dracoUnityLib = "__Internal";
-#elif UNITY_ANDROID || UNITY_STANDALONE || UNITY_WSA || UNITY_EDITOR || PLATFORM_LUMIN
+#elif UNITY_ANDROID || UNITY_STANDALONE || UNITY_WSA || UNITY_EDITOR || PLATFORM_LUMIN || PLATFORM_EMBEDDED_LINUX
         internal const string dracoUnityLib = "draco_unity";
 #else
         // Unsupported platform
@@ -1089,19 +1089,19 @@ namespace Draco
                 switch (dataType)
                 {
                     case DataType.UInt16:
-                        {
-                            var indices = mesh.GetIndexData<ushort>();
-                            indicesPtr = indices.GetUnsafePtr();
-                            indicesLength = indices.Length;
-                            break;
-                        }
+                    {
+                        var indices = mesh.GetIndexData<ushort>();
+                        indicesPtr = indices.GetUnsafePtr();
+                        indicesLength = indices.Length;
+                        break;
+                    }
                     case DataType.UInt32:
-                        {
-                            var indices = mesh.GetIndexData<uint>();
-                            indicesPtr = indices.GetUnsafePtr();
-                            indicesLength = indices.Length;
-                            break;
-                        }
+                    {
+                        var indices = mesh.GetIndexData<uint>();
+                        indicesPtr = indices.GetUnsafePtr();
+                        indicesLength = indices.Length;
+                        break;
+                    }
                     default:
                         result[0] = -1;
                         return;
@@ -1120,23 +1120,23 @@ namespace Draco
                 switch (mesh.indexFormat)
                 {
                     case IndexFormat.UInt16:
+                    {
+                        var indices = mesh.GetIndexData<ushort>();
+                        for (var i = 0; i < indices.Length; i++)
                         {
-                            var indices = mesh.GetIndexData<ushort>();
-                            for (var i = 0; i < indices.Length; i++)
-                            {
-                                indices[i] = (ushort)i;
-                            }
-                            break;
+                            indices[i] = (ushort)i;
                         }
+                        break;
+                    }
                     case IndexFormat.UInt32:
+                    {
+                        var indices = mesh.GetIndexData<uint>();
+                        for (var i = 0; i < indices.Length; i++)
                         {
-                            var indices = mesh.GetIndexData<uint>();
-                            for (var i = 0; i < indices.Length; i++)
-                            {
-                                indices[i] = (uint)i;
-                            }
-                            break;
+                            indices[i] = (uint)i;
                         }
+                        break;
+                    }
                 }
             }
         }
