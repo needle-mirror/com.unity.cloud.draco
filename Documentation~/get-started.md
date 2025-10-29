@@ -1,6 +1,7 @@
 # Get started
 
-> **Important**: Before you get started with the package, make sure you meet the [prerequisites](prerequisites.md).
+> [!NOTE]
+> Before you get started with the package, make sure you meet the [prerequisites](prerequisites.md).
 
 With the package installed you can [place a Draco file into your Assets folder](use-case-editor-import.md) to inspect it.
 

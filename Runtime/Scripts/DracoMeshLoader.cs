@@ -21,7 +21,7 @@ namespace Draco
         readonly bool m_ConvertSpace;
 
         /// <summary>
-        /// Create a DracoMeshLoader instance which let's you decode Draco data.
+        /// Create a DracoMeshLoader instance which lets you decode Draco data.
         /// </summary>
         /// <param name="convertSpace">If true, coordinate space is converted from right-hand (like in glTF) to left-hand (Unity).</param>
         public DracoMeshLoader(bool convertSpace = true)
@@ -37,7 +37,7 @@ namespace Draco
         /// <param name="requireTangents">If draco does not contain tangents and this is set to true, tangents and normals are calculated.</param>
         /// <param name="weightsAttributeId">Draco attribute ID that contains bone weights (for skinning)</param>
         /// <param name="jointsAttributeId">Draco attribute ID that contains bone joint indices (for skinning)</param>
-        /// <param name="forceUnityLayout">Enforces vertex buffer layout with highest compatibility. Enable this if you want to use blend shapes on the resulting mesh</param>
+        /// <param name="forceUnityLayout">Enforces vertex buffer layout with the highest compatibility. Enable this if you want to use blend shapes on the resulting mesh</param>
         /// <returns>Unity Mesh or null in case of errors</returns>
         /// <seealso cref="Draco.DracoDecoder.DecodeMesh(NativeSlice{byte})"/>
         [Obsolete("Use DracoDecoder.DecodeMesh instead.")]
@@ -65,7 +65,7 @@ namespace Draco
         /// <param name="requireTangents">If draco does not contain tangents and this is set to true, tangents and normals are calculated.</param>
         /// <param name="weightsAttributeId">Draco attribute ID that contains bone weights (for skinning)</param>
         /// <param name="jointsAttributeId">Draco attribute ID that contains bone joint indices (for skinning)</param>
-        /// <param name="forceUnityLayout">Enforces vertex buffer layout with highest compatibility. Enable this if you want to use blend shapes on the resulting mesh</param>
+        /// <param name="forceUnityLayout">Enforces vertex buffer layout with the highest compatibility. Enable this if you want to use blend shapes on the resulting mesh</param>
         /// <returns>Unity Mesh or null in case of errors</returns>
         /// <seealso cref="Draco.DracoDecoder.DecodeMesh(byte[])"/>
         [Obsolete("Use DracoDecoder.DecodeMesh instead.")]
@@ -94,7 +94,7 @@ namespace Draco
         /// <param name="requireTangents">If draco does not contain tangents and this is set to true, tangents and normals are calculated.</param>
         /// <param name="weightsAttributeId">Draco attribute ID that contains bone weights (for skinning)</param>
         /// <param name="jointsAttributeId">Draco attribute ID that contains bone joint indices (for skinning)</param>
-        /// <param name="forceUnityLayout">Enforces vertex buffer layout with highest compatibility. Enable this if you want to use blend shapes on the resulting mesh</param>
+        /// <param name="forceUnityLayout">Enforces vertex buffer layout with the highest compatibility. Enable this if you want to use blend shapes on the resulting mesh</param>
         /// <returns>A DecodeResult</returns>
         /// <seealso cref="Draco.DracoDecoder.DecodeMesh(Mesh.MeshData,byte[])"/>
         [Obsolete("Use DracoDecoder.DecodeMesh instead.")]
@@ -125,7 +125,7 @@ namespace Draco
         /// <param name="requireTangents">If draco does not contain tangents and this is set to true, tangents and normals are calculated.</param>
         /// <param name="weightsAttributeId">Draco attribute ID that contains bone weights (for skinning)</param>
         /// <param name="jointsAttributeId">Draco attribute ID that contains bone joint indices (for skinning)</param>
-        /// <param name="forceUnityLayout">Enforces vertex buffer layout with highest compatibility. Enable this if you want to use blend shapes on the resulting mesh</param>
+        /// <param name="forceUnityLayout">Enforces vertex buffer layout with the highest compatibility. Enable this if you want to use blend shapes on the resulting mesh</param>
         /// <returns>A DecodeResult</returns>
         /// <seealso cref="Draco.DracoDecoder.DecodeMesh(Mesh.MeshData,NativeSlice{byte})"/>
         [Obsolete("Use DracoDecoder.DecodeMesh instead.")]

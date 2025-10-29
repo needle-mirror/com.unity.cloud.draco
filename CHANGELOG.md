@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2025-10-29
+
+### Added
+- Decoding multiple Draco meshes into sub-meshes of a single Unity Mesh.
+- [DecodeSetting.DontCalculateBounds](xref:Draco.DecodeSettings.DontCalculateBounds) allows users to avoid bounding box calculation, slightly speeding up the decoding process.
+
+### Changed
+- Updated Linux binary to version 3.3.1
+- (Documentation) Updated supported platforms
+
+### Fixed
+- Linux binary is now compatible with Ubuntu 18.04.
+
 ## [5.3.0] - 2025-10-15
 
 ### Added
@@ -14,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - (Test) Package coherence tests.
 - (Test) Bone-weight decoding tests.
 - (Test) Importer tests.
+- (Test) Scene, component and data structures that enable testing Draco decoding and observing the results visually.
+- (Test) Multi sub-mesh decoding tests (with identical, asymmetrical and unbalanced vertex attributes).
+- (Test) Certify correct index format choice.
+- (Test) Invalid Draco sub-mesh (missing positions).
 
 ### Changed
 - Dependency version changes (to match the recommended version in Unity 2021 xLTS):
@@ -28,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mesh bounds are consistently applied.
 - Bone weight data is consistently applied and disposed.
 - Don't attempt to recalculate normals and tangents on point clouds.
+- UInt32 index format is only chosen over UInt16 when absolutely required.
+- Memory leak when single sub-mesh fails to decode (due to missing positions)
+- Avoid null pointer de-reference when getting attribute data failed.
 
 ## [5.2.0] - 2025-08-19
 

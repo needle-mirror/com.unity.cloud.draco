@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
@@ -112,13 +111,13 @@ namespace Draco.Encode
             var result = new EncodeResult[meshData.subMeshCount];
             var vertexAttributes = mesh.GetVertexAttributes();
 
-            var strides = new int[DracoNative.maxStreamCount];
+            var strides = new int[DracoMesh.maxStreamCount];
             var attributeDataDict = new Dictionary<VertexAttribute, AttributeData>();
 
             foreach (var attribute in vertexAttributes)
             {
                 var attributeData = new AttributeData { offset = strides[attribute.stream], stream = attribute.stream };
-                var size = attribute.dimension * GetAttributeSize(attribute.format);
+                var size = attribute.dimension * attribute.format.GetByteSize();
                 strides[attribute.stream] += size;
                 attributeDataDict[attribute.attribute] = attributeData;
             }
@@ -172,7 +171,7 @@ namespace Draco.Encode
                         GetDataType(format),
                         dimension,
                         stride,
-                        DracoNative.ConvertSpace(attribute),
+                        DracoInstance.ConvertSpace(attribute),
                         baseAddr
                         );
                     attributeIds[attribute] = (id, dimension);
@@ -491,67 +490,34 @@ namespace Draco.Encode
             }
         }
 
-        static unsafe int GetAttributeSize(VertexAttributeFormat format)
-        {
-            switch (format)
-            {
-                case VertexAttributeFormat.Float32:
-                    return sizeof(float);
-                case VertexAttributeFormat.Float16:
-                    return sizeof(half);
-                case VertexAttributeFormat.UNorm8:
-                    return sizeof(byte);
-                case VertexAttributeFormat.SNorm8:
-                    return sizeof(sbyte);
-                case VertexAttributeFormat.UNorm16:
-                    return sizeof(ushort);
-                case VertexAttributeFormat.SNorm16:
-                    return sizeof(short);
-                case VertexAttributeFormat.UInt8:
-                    return sizeof(byte);
-                case VertexAttributeFormat.SInt8:
-                    return sizeof(sbyte);
-                case VertexAttributeFormat.UInt16:
-                    return sizeof(ushort);
-                case VertexAttributeFormat.SInt16:
-                    return sizeof(short);
-                case VertexAttributeFormat.UInt32:
-                    return sizeof(uint);
-                case VertexAttributeFormat.SInt32:
-                    return sizeof(int);
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(format), format, null);
-            }
-        }
-
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         static extern IntPtr dracoEncoderCreate(int vertexCount);
 
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         static extern IntPtr dracoEncoderCreatePointCloud(int vertexCount);
 
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         internal static extern void dracoEncoderRelease(IntPtr encoder);
 
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         static extern void dracoEncoderSetCompressionSpeed(IntPtr encoder, int encodingSpeed, int decodingSpeed);
 
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         static extern void dracoEncoderSetQuantizationBits(IntPtr encoder, int position, int normal, int uv, int color, int generic);
 
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         internal static extern bool dracoEncoderEncode(IntPtr encoder, bool preserveTriangleOrder);
 
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         static extern uint dracoEncoderGetEncodedVertexCount(IntPtr encoder);
 
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         static extern uint dracoEncoderGetEncodedIndexCount(IntPtr encoder);
 
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         internal static extern unsafe void dracoEncoderGetEncodeBuffer(IntPtr encoder, out void* data, out ulong size);
 
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         static extern bool dracoEncoderSetIndices(
             IntPtr encoder,
             DataType indexComponentType,
@@ -560,7 +526,7 @@ namespace Draco.Encode
             IntPtr indices
             );
 
-        [DllImport(DracoNative.dracoUnityLib)]
+        [DllImport(DracoInstance.k_DracoUnityLib)]
         static extern uint dracoEncoderSetAttribute(
             IntPtr encoder,
             int attributeType,

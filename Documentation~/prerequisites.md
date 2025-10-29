@@ -4,14 +4,18 @@
 
 *Draco for Unity* supports the following platforms:
 
-- WebGL
-- iOS (device and simulator SDKs; arm64 and armv7a)
-- Android (x86, x86_64, arm64 and armv7a)
-- Windows (x86 32-bit, x86 64-bit and ARM64)
-- Universal Windows Platform (x64,x86,ARM,ARM64)
-- macOS (Apple Silicon and Intel)
-- Linux (64 bit)
-- Lumin / Magic Leap
+- Web
+- iOS
+- tvOS
+- visionOS
+- Android
+  - Chrome OS (via Android)
+  - Magic Leap 2 (via Android)
+- Windows
+- Universal Windows Platform
+- macOS
+- Linux (x86_64)
+- Lumin / Magic Leap 1
 - Embedded Linux
 
 ## Compatibility

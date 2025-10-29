@@ -21,7 +21,7 @@ namespace Draco
         /// If this is set to true (or <see cref="RequireTangents"/> is true), a normals vertex attribute is added
         /// regardless whether the Draco data contains actual normals. If they are missing, normals get calculated
         /// whenever a <see cref="Mesh"/> is returned. When <see cref="Mesh.MeshData"/> is used, normals have to be
-        /// calculated manually afterwards.
+        /// calculated manually afterward.
         /// </summary>
         /// <seealso cref="DecodeResult.calculateNormals"/>
         RequireNormals = 1,
@@ -30,12 +30,12 @@ namespace Draco
         /// If this is set to true, normals and tangents vertex attributes are added regardless whether the Draco data
         /// contains actual normals. If they are missing, normals and tangents get calculated whenever
         /// a <see cref="Mesh"/> is returned. When <see cref="Mesh.MeshData"/> is used, normals and tangents have to be
-        /// calculated manually afterwards.
+        /// calculated manually afterward.
         /// </summary>
         RequireTangents = 1 << 1,
 
         /// <summary>
-        /// Enforces vertex buffer layout with highest compatibility. Enable this if you want to use blend shapes on the
+        /// Enforces vertex buffer layout with the highest compatibility. Enable this if you want to use blend shapes on the
         /// resulting mesh.
         /// </summary>
         ForceUnityVertexLayout = 1 << 2,
@@ -45,6 +45,11 @@ namespace Draco
         /// x-axis.
         /// </summary>
         ConvertSpace = 1 << 3,
+
+        /// <summary>
+        /// Do not calculate an axis aligned bounding box, depicting the positional minimum and maximum extents of the mesh.
+        /// </summary>
+        DontCalculateBounds = 1 << 4,
 
         /// <summary>
         /// Require both tangents and normals. Useful since tangents imply requirement for normals.

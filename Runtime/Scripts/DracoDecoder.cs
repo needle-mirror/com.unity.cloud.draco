@@ -12,8 +12,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -44,6 +42,20 @@ namespace Draco
         public static async Task<DecodeResult> DecodeMesh(
             Mesh.MeshData meshData,
             NativeArray<byte>.ReadOnly encodedData
+        )
+        {
+            return await DecodeMesh(meshData, encodedData, DecodeSettings.Default, null);
+        }
+
+        /// <summary>
+        /// Decodes multiple Draco meshes into one Unity mesh with sub-meshes.
+        /// </summary>
+        /// <param name="meshData">MeshData used to create the mesh</param>
+        /// <param name="encodedData">Compressed Draco data</param>
+        /// <returns>A DecodeResult</returns>
+        public static async Task<DecodeResult> DecodeMesh(
+            Mesh.MeshData meshData,
+            IReadOnlyList<NativeArray<byte>.ReadOnly> encodedData
         )
         {
             return await DecodeMesh(meshData, encodedData, DecodeSettings.Default, null);
@@ -81,6 +93,22 @@ namespace Draco
         }
 
         /// <summary>
+        /// Decodes multiple Draco meshes into one Unity mesh with sub-meshes.
+        /// </summary>
+        /// <param name="meshData">MeshData used to create the mesh</param>
+        /// <param name="encodedData">Compressed Draco data</param>
+        /// <param name="decodeSettings">Decode setting flags</param>
+        /// <returns>A DecodeResult</returns>
+        public static async Task<DecodeResult> DecodeMesh(
+            Mesh.MeshData meshData,
+            IReadOnlyList<NativeArray<byte>.ReadOnly> encodedData,
+            DecodeSettings decodeSettings
+        )
+        {
+            return await DecodeMesh(meshData, encodedData, decodeSettings, null);
+        }
+
+        /// <summary>
         /// Decodes a Draco mesh.
         /// </summary>
         /// <param name="meshData">MeshData used to create the mesh</param>
@@ -117,13 +145,40 @@ namespace Draco
                 false
 #endif
             );
-            var encodedDataPtr = GetUnsafeReadOnlyIntPtr(encodedData);
-            var result = await DecodeMesh(
+            var result = await DecodeMeshInternal(
                 meshData,
-                encodedDataPtr,
-                encodedData.Length,
+                encodedData,
                 decodeSettings,
                 attributeIdMap
+            );
+            return result;
+        }
+
+        /// <summary>
+        /// Decodes multiple Draco meshes into one Unity mesh with sub-meshes.
+        /// </summary>
+        /// <param name="meshData">MeshData used to create the mesh</param>
+        /// <param name="encodedData">Compressed Draco data</param>
+        /// <param name="decodeSettings">Decode setting flags</param>
+        /// <param name="attributeIdMaps">Attribute type to index maps</param>
+        /// <returns>A DecodeResult</returns>
+        public static async Task<DecodeResult> DecodeMesh(
+            Mesh.MeshData meshData,
+            IReadOnlyList<NativeArray<byte>.ReadOnly> encodedData,
+            DecodeSettings decodeSettings,
+            IReadOnlyList<Dictionary<VertexAttribute, int>> attributeIdMaps
+        )
+        {
+            CertifySupportedPlatform(
+#if UNITY_EDITOR
+                false
+#endif
+            );
+            var result = await DecodeMeshInternal(
+                meshData,
+                encodedData,
+                decodeSettings,
+                attributeIdMaps
             );
             return result;
         }
@@ -149,11 +204,9 @@ namespace Draco
                 false
 #endif
             );
-            var encodedDataPtr = GetUnsafeReadOnlyIntPtr(encodedData);
-            var result = await DecodeMesh(
+            var result = await DecodeMeshInternal(
                 meshData,
-                encodedDataPtr,
-                encodedData.Length,
+                encodedData.AsNativeArray().AsReadOnly(),
                 decodeSettings,
                 attributeIdMap
             );
@@ -205,15 +258,13 @@ namespace Draco
                 false
 #endif
             );
-            var encodedDataPtr = PinGCArrayAndGetDataAddress(encodedData, out var gcHandle);
-            var result = await DecodeMesh(
+            using var nativeArray = new ManagedNativeArray(encodedData);
+            var result = await DecodeMeshInternal(
                 meshData,
-                encodedDataPtr,
-                encodedData.Length,
+                nativeArray.nativeArray.AsReadOnly(),
                 decodeSettings,
                 attributeIdMap
                 );
-            UnsafeUtility.ReleaseGCObject(gcHandle);
             return result;
         }
 
@@ -230,7 +281,23 @@ namespace Draco
             NativeArray<byte>.ReadOnly encodedData
         )
         {
-            return await DecodeMesh(GetUnsafeReadOnlyIntPtr(encodedData), encodedData.Length, DecodeSettings.Default, null);
+            return await DecodeMesh(encodedData, DecodeSettings.Default, null);
+        }
+
+        /// <summary>
+        /// Decodes multiple Draco meshes into one Unity mesh with sub-meshes.
+        /// </summary>
+        /// <remarks>
+        /// Consider using <see cref="DecodeMesh(UnityEngine.Mesh.MeshData,IReadOnlyList{Unity.Collections.NativeArray{byte}.ReadOnly})"/>
+        /// for increased performance.
+        /// </remarks>
+        /// <param name="encodedData">Compressed Draco data</param>
+        /// <returns>Unity Mesh or null in case of errors</returns>
+        public static async Task<Mesh> DecodeMesh(
+            IReadOnlyList<NativeArray<byte>.ReadOnly> encodedData
+        )
+        {
+            return await DecodeMesh(encodedData, DecodeSettings.Default, null);
         }
 
         /// <summary>
@@ -247,7 +314,7 @@ namespace Draco
             NativeSlice<byte> encodedData
         )
         {
-            return await DecodeMesh(GetUnsafeReadOnlyIntPtr(encodedData), encodedData.Length, DecodeSettings.Default, null);
+            return await DecodeMesh(encodedData, DecodeSettings.Default, null);
         }
 
         /// <summary>
@@ -265,7 +332,25 @@ namespace Draco
             DecodeSettings decodeSettings
         )
         {
-            return await DecodeMesh(GetUnsafeReadOnlyIntPtr(encodedData), encodedData.Length, decodeSettings, null);
+            return await DecodeMesh(encodedData, decodeSettings, null);
+        }
+
+        /// <summary>
+        /// Decodes multiple Draco meshes into one Unity mesh with sub-meshes.
+        /// </summary>
+        /// <remarks>
+        /// Consider using <see cref="DecodeMesh(UnityEngine.Mesh.MeshData,IReadOnlyList{Unity.Collections.NativeArray{byte}.ReadOnly},DecodeSettings)"/>
+        /// for increased performance.
+        /// </remarks>
+        /// <param name="encodedData">Compressed Draco data</param>
+        /// <param name="decodeSettings">Decode setting flags</param>
+        /// <returns>Unity Mesh or null in case of errors</returns>
+        public static async Task<Mesh> DecodeMesh(
+            IReadOnlyList<NativeArray<byte>.ReadOnly> encodedData,
+            DecodeSettings decodeSettings
+        )
+        {
+            return await DecodeMesh(encodedData, decodeSettings, null);
         }
 
         /// <summary>
@@ -284,7 +369,7 @@ namespace Draco
             DecodeSettings decodeSettings
         )
         {
-            return await DecodeMesh(GetUnsafeReadOnlyIntPtr(encodedData), encodedData.Length, decodeSettings, null);
+            return await DecodeMesh(encodedData, decodeSettings, null);
         }
 
         /// <summary>
@@ -304,7 +389,45 @@ namespace Draco
             Dictionary<VertexAttribute, int> attributeIdMap
         )
         {
-            return await DecodeMesh(GetUnsafeReadOnlyIntPtr(encodedData), encodedData.Length, decodeSettings, attributeIdMap);
+            CertifySupportedPlatform(
+#if UNITY_EDITOR
+                false
+#endif
+            );
+            return await DecodeMeshInternal(
+                encodedData,
+                decodeSettings,
+                attributeIdMap
+            );
+        }
+
+        /// <summary>
+        /// Decodes multiple Draco meshes into one Unity mesh with sub-meshes.
+        /// </summary>
+        /// <remarks>
+        /// Consider using <see cref="DecodeMesh(UnityEngine.Mesh.MeshData,IReadOnlyList{Unity.Collections.NativeArray{byte}.ReadOnly},DecodeSettings,IReadOnlyList{Dictionary{VertexAttribute,int}})"/>
+        /// for increased performance.
+        /// </remarks>
+        /// <param name="encodedData">Compressed Draco data</param>
+        /// <param name="decodeSettings">Decode setting flags</param>
+        /// <param name="attributeIdMaps">Attribute type to index maps</param>
+        /// <returns>Unity Mesh or null in case of errors</returns>
+        public static async Task<Mesh> DecodeMesh(
+            IReadOnlyList<NativeArray<byte>.ReadOnly> encodedData,
+            DecodeSettings decodeSettings,
+            IReadOnlyList<Dictionary<VertexAttribute, int>> attributeIdMaps
+        )
+        {
+            CertifySupportedPlatform(
+#if UNITY_EDITOR
+                false
+#endif
+            );
+            return await DecodeMeshInternal(
+                encodedData,
+                decodeSettings,
+                attributeIdMaps
+            );
         }
 
         /// <summary>
@@ -325,39 +448,7 @@ namespace Draco
             Dictionary<VertexAttribute, int> attributeIdMap
         )
         {
-            return await DecodeMesh(GetUnsafeReadOnlyIntPtr(encodedData), encodedData.Length, decodeSettings, attributeIdMap);
-        }
-
-        static async Task<Mesh> DecodeMesh(
-            IntPtr encodedDataPtr,
-            int encodedDataLength,
-            DecodeSettings decodeSettings,
-            Dictionary<VertexAttribute, int> attributeIdMap
-        )
-        {
-            CertifySupportedPlatform(
-#if UNITY_EDITOR
-                false
-#endif
-            );
-            var meshDataArray = Mesh.AllocateWritableMeshData(1);
-            var mesh = meshDataArray[0];
-            var result = await DecodeMesh(
-                mesh,
-                encodedDataPtr,
-                encodedDataLength,
-                decodeSettings,
-                attributeIdMap
-                );
-            if (!result.success)
-            {
-                meshDataArray.Dispose();
-                return null;
-            }
-            var unityMesh = new Mesh();
-            Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, unityMesh, defaultMeshUpdateFlags);
-            ApplyAndDisposeDecodeResult(unityMesh, result, decodeSettings);
-            return unityMesh;
+            return await DecodeMesh(encodedData.AsNativeArray().AsReadOnly(), decodeSettings, attributeIdMap);
         }
 
         /// <inheritdoc cref="DecodeMesh(NativeSlice{byte})"/>
@@ -399,8 +490,9 @@ namespace Draco
                 false
 #endif
             );
-            return await DecodeMeshInternal(
-                encodedData,
+            using var nativeArray = new ManagedNativeArray(encodedData);
+            return await DecodeMesh(
+                nativeArray.nativeArray.AsReadOnly(),
                 decodeSettings,
                 attributeIdMap
             );
@@ -435,40 +527,6 @@ namespace Draco
             return result;
         }
 
-        internal static async Task<Mesh> DecodeMeshInternal(
-            byte[] encodedData,
-            DecodeSettings decodeSettings,
-            Dictionary<VertexAttribute, int> attributeIdMap
-#if UNITY_EDITOR
-            ,bool sync = false
-#endif
-        )
-        {
-            var encodedDataPtr = PinGCArrayAndGetDataAddress(encodedData, out var gcHandle);
-            var meshDataArray = Mesh.AllocateWritableMeshData(1);
-            var mesh = meshDataArray[0];
-            var result = await DecodeMesh(
-                mesh,
-                encodedDataPtr,
-                encodedData.Length,
-                decodeSettings,
-                attributeIdMap
-#if UNITY_EDITOR
-                ,sync
-#endif
-            );
-            UnsafeUtility.ReleaseGCObject(gcHandle);
-            if (!result.success)
-            {
-                meshDataArray.Dispose();
-                return null;
-            }
-            var unityMesh = new Mesh();
-            Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, unityMesh, defaultMeshUpdateFlags);
-            ApplyAndDisposeDecodeResult(unityMesh, result, decodeSettings);
-            return unityMesh;
-        }
-
         static void ApplyAndDisposeDecodeResult(Mesh unityMesh, DecodeResult result, DecodeSettings decodeSettings)
         {
             unityMesh.bounds = result.bounds;
@@ -490,10 +548,8 @@ namespace Draco
             }
         }
 
-        static async Task<DecodeResult> DecodeMesh(
-            Mesh.MeshData meshData,
-            IntPtr encodedData,
-            int size,
+        internal static async Task<Mesh> DecodeMeshInternal(
+            NativeArray<byte>.ReadOnly encodedData,
             DecodeSettings decodeSettings,
             Dictionary<VertexAttribute, int> attributeIdMap
 #if UNITY_EDITOR
@@ -501,82 +557,95 @@ namespace Draco
 #endif
         )
         {
-            var dracoNative = new DracoNative(meshData, decodeSettings);
-
-#if UNITY_EDITOR
-            if (sync) {
-                dracoNative.InitSync(encodedData, size);
-            }
-            else
-#endif
-            {
-                await WaitForJobHandle(dracoNative.Init(encodedData, size));
-            }
-            if (dracoNative.ErrorOccured())
-            {
-                dracoNative.DisposeDracoMesh();
-                return new DecodeResult();
-            }
-
-            dracoNative.CreateMesh(
-                out var calculateNormals,
+            var meshDataArray = Mesh.AllocateWritableMeshData(1);
+            var mesh = meshDataArray[0];
+            var result = await DecodeMeshInternal(
+                mesh,
+                encodedData,
+                decodeSettings,
                 attributeIdMap
-                );
 #if UNITY_EDITOR
-            if (sync) {
-                dracoNative.DecodeVertexDataSync();
-            }
-            else
+                ,sync
 #endif
+            );
+            if (!result.success)
             {
-                await WaitForJobHandle(dracoNative.DecodeVertexData());
+                meshDataArray.Dispose();
+                return null;
             }
-            var error = dracoNative.ErrorOccured();
-            dracoNative.DisposeDracoMesh();
-            if (error)
-            {
-                return new DecodeResult();
-            }
-
-            var bounds = dracoNative.CreateBounds();
-            var success = dracoNative.PopulateMeshData(bounds);
-            BoneWeightData boneWeightData = null;
-            if (success && dracoNative.hasBoneWeightData)
-            {
-                boneWeightData = new BoneWeightData(dracoNative.bonesPerVertex, dracoNative.boneWeights);
-                dracoNative.DisposeBoneWeightData();
-            }
-            return new DecodeResult(
-                success,
-                bounds,
-                calculateNormals,
-                boneWeightData
-                );
+            var unityMesh = new Mesh();
+            Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, unityMesh, defaultMeshUpdateFlags);
+            ApplyAndDisposeDecodeResult(unityMesh, result, decodeSettings);
+            return unityMesh;
         }
 
-        static async Task WaitForJobHandle(JobHandle jobHandle)
+        internal static async Task<Mesh> DecodeMeshInternal(
+            IReadOnlyList<NativeArray<byte>.ReadOnly> encodedData,
+            DecodeSettings decodeSettings,
+            IReadOnlyList<Dictionary<VertexAttribute, int>> attributeIdMaps
+#if UNITY_EDITOR
+            ,bool sync = false
+#endif
+        )
         {
-            while (!jobHandle.IsCompleted)
+            var meshDataArray = Mesh.AllocateWritableMeshData(1);
+            var mesh = meshDataArray[0];
+            var result = await DecodeMeshInternal(
+                mesh,
+                encodedData,
+                decodeSettings,
+                attributeIdMaps
+#if UNITY_EDITOR
+                ,sync
+#endif
+            );
+            if (!result.success)
             {
-                await Task.Yield();
+                meshDataArray.Dispose();
+                return null;
             }
-            jobHandle.Complete();
+            var unityMesh = new Mesh();
+            Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, unityMesh, defaultMeshUpdateFlags);
+            ApplyAndDisposeDecodeResult(unityMesh, result, decodeSettings);
+            return unityMesh;
         }
 
-        [Obsolete("Use the overload that accepts encodedData as NativeArray<byte>.ReadOnly.")]
-        static unsafe IntPtr GetUnsafeReadOnlyIntPtr(NativeSlice<byte> encodedData)
+        internal static async Task<DecodeResult> DecodeMeshInternal(
+            Mesh.MeshData meshData,
+            NativeArray<byte>.ReadOnly encodedData,
+            DecodeSettings decodeSettings,
+            Dictionary<VertexAttribute, int> attributeIdMap
+#if UNITY_EDITOR
+            ,bool sync = false
+#endif
+        )
         {
-            return (IntPtr)encodedData.GetUnsafeReadOnlyPtr();
+            var mesh = new DracoMesh(decodeSettings, meshData);
+            return await mesh.DecodeAsync(
+                new[] { encodedData },
+                new[] { attributeIdMap }
+#if UNITY_EDITOR
+                ,sync
+#endif
+            );
         }
 
-        static unsafe IntPtr GetUnsafeReadOnlyIntPtr(NativeArray<byte>.ReadOnly encodedData)
+        internal static async Task<DecodeResult> DecodeMeshInternal(
+            Mesh.MeshData meshData,
+            IReadOnlyList<NativeArray<byte>.ReadOnly> encodedData,
+            DecodeSettings decodeSettings,
+            IReadOnlyList<Dictionary<VertexAttribute, int>> attributeIdMap
+#if UNITY_EDITOR
+            ,bool sync = false
+#endif
+        )
         {
-            return (IntPtr)encodedData.GetUnsafeReadOnlyPtr();
-        }
-
-        static unsafe IntPtr PinGCArrayAndGetDataAddress(byte[] encodedData, out ulong gcHandle)
-        {
-            return (IntPtr)UnsafeUtility.PinGCArrayAndGetDataAddress(encodedData, out gcHandle);
+            var mesh = new DracoMesh(decodeSettings, meshData);
+            return await mesh.DecodeAsync(encodedData, attributeIdMap
+#if UNITY_EDITOR
+                ,sync
+#endif
+            );
         }
 
 #if !UNITY_EDITOR && DRACO_PLATFORM_SUPPORTED
