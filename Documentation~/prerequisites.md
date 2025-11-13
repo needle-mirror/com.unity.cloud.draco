@@ -15,12 +15,11 @@
 - Universal Windows Platform
 - macOS
 - Linux (x86_64)
-- Lumin / Magic Leap 1
 - Embedded Linux
 
 ## Compatibility
 
-The *Draco for Unity* package is compatible with Unity version of 2021.3.46f1 or later.
+The *Draco for Unity* package is compatible with Unity version of 2022.3.67f2 or later.
 
 ## Troubleshooting
 

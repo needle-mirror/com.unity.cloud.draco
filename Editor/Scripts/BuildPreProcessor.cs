@@ -23,8 +23,6 @@ namespace Draco.Editor
         internal static readonly Dictionary<GUID, int> webAssemblyLibraries = new Dictionary<GUID, int>()
         {
             // Database of WebAssembly library files within folder `Runtime/Plugins/WebGL`
-            [new GUID("8c582db225b9e4bd4865264fece2da8b")] = 2020, // 2020/libdraco_unity.bc
-            [new GUID("9846a73c344db4fa49e600594da610eb")] = 2021, // 2021/libdraco_unity.a
             [new GUID("300cc74d74bc64ca78d3fe7d50cb5439")] = 2022, // 2022/libdraco_unity.a
             [new GUID("9ab284c4ad5904cf09339d3522f7b10d")] = 2023, // 2023/libdraco_unity.a
         };
@@ -124,7 +122,6 @@ namespace Draco.Editor
 
         public static bool IsWebAssemblyCompatible(GUID pluginGuid, UnityVersion unityVersion)
         {
-            var wasm2021 = new UnityVersion("2021.2");
             var wasm2022 = new UnityVersion("2022.2");
             var wasm2023 = new UnityVersion("2023.2.0a17");
 
@@ -132,10 +129,6 @@ namespace Draco.Editor
             {
                 switch (majorVersion)
                 {
-                    case 2020:
-                        return unityVersion < wasm2021;
-                    case 2021:
-                        return unityVersion >= wasm2021 && unityVersion < wasm2022;
                     case 2022:
                         return unityVersion >= wasm2022 && unityVersion < wasm2023;
                     case 2023:
