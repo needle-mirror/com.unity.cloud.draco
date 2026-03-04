@@ -210,5 +210,19 @@ namespace Draco
         {
             return *(((int*)baseAddress) + index);
         }
+
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStaticsOnLoad()
+        {
+            // Reset cached function pointers
+            s_GetIndexValueInt8Method = default;
+            s_GetIndexValueUInt8Method = default;
+            s_GetIndexValueInt16Method = default;
+            s_GetIndexValueUInt16Method = default;
+            s_GetIndexValueInt32Method = default;
+            s_GetIndexValueUInt32Method = default;
+        }
+#endif
     }
 }
