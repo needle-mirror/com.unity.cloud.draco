@@ -19,7 +19,7 @@
 
 ## Compatibility
 
-The *Draco for Unity* package is compatible with Unity version of 2022.3.67f2 or later.
+The *Draco for Unity* package is compatible with Unity version of 6000.0 or later.
 
 ## Troubleshooting
 

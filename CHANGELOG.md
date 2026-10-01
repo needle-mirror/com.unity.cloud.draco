@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0] - 2026-10-01
+
+### Added
+- (Test) Performance tests.
+
+### Changed
+- Increased minimum required Unity version to 6.0 LTS.
+- Removed use of [UnsafeUtility.PinGCArrayAndGetDataAddress](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/Unity.Collections.LowLevel.Unsafe.UnsafeUtility.PinGCArrayAndGetDataAddress.html) and [UnsafeUtility.ReleaseGCObject](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/Unity.Collections.LowLevel.Unsafe.UnsafeUtility.ReleaseGCObject.html) (obsolete from Unity 6.4 onward).
+- (Export) Index buffers are pinned via a `fixed` statement (instead of a pinned `GCHandle`), which is roughly five times faster.
+- On Unity 6.5 and newer, static state is reset via the `[AutoStaticsCleanup]` attribute instead of a `RuntimeInitializeOnLoadMethod`. This removes compiler warnings on CoreCLR based runtimes and reduces domain reload pressure, since the attribute initializes statics lazily.
+
+### Fixed
+- (Export) A mesh's index array could stay pinned permanently if an exception occurred while the pinned `GCHandle` was held.
+- Ensured `bool` is marshalled as one byte in P/Invoke calls.
+
+### Removed
+- WebAssembly 2022 binary.
+
 ## [5.4.3] - 2026-03-04
 
 ### Changed

@@ -180,15 +180,12 @@ namespace Draco.Encode
                 if (subMesh.topology == MeshTopology.Triangles)
                 {
                     var indices = mesh.GetIndices(subMeshIndex);
-                    var indicesData = PinArray(indices, out var gcHandle);
-                    dracoEncoderSetIndices(
+                    DracoEncoderSetIndicesWrapper(
                         dracoEncoder,
                         DataType.UInt32,
-                        (uint)indices.Length,
-                        true,
-                        indicesData
-                        );
-                    UnsafeUtility.ReleaseGCObject(gcHandle);
+                        indices,
+                        true
+                    );
                 }
 
                 // For both encoding and decoding (0 = slow and best compression; 10 = fast)
@@ -419,11 +416,6 @@ namespace Draco.Encode
                 new SpeedSettings(encodingSpeed, decodingSpeed));
         }
 
-        static unsafe IntPtr PinArray(int[] indices, out ulong gcHandle)
-        {
-            return (IntPtr)UnsafeUtility.PinGCArrayAndGetDataAddress(indices, out gcHandle);
-        }
-
         static unsafe IntPtr[] GetReadOnlyPointers(int count, NativeArray<byte>[] vData)
         {
             var result = new IntPtr[count];
@@ -433,6 +425,20 @@ namespace Draco.Encode
             }
 
             return result;
+        }
+
+        static unsafe bool DracoEncoderSetIndicesWrapper(
+            IntPtr encoder,
+            DataType indexComponentType,
+            int[] indices,
+            bool flip
+        )
+        {
+            fixed (int* indicesData = indices)
+            {
+                return dracoEncoderSetIndices(
+                    encoder, indexComponentType, (uint)indices.Length, flip, (IntPtr)indicesData);
+            }
         }
 
         static DataType GetDataType(VertexAttributeFormat format)
@@ -506,7 +512,9 @@ namespace Draco.Encode
         static extern void dracoEncoderSetQuantizationBits(IntPtr encoder, int position, int normal, int uv, int color, int generic);
 
         [DllImport(DracoInstance.k_DracoUnityLib)]
-        internal static extern bool dracoEncoderEncode(IntPtr encoder, bool preserveTriangleOrder);
+        [return: MarshalAs(UnmanagedType.I1)]
+        internal static extern bool dracoEncoderEncode(
+            IntPtr encoder, [MarshalAs(UnmanagedType.I1)] bool preserveTriangleOrder);
 
         [DllImport(DracoInstance.k_DracoUnityLib)]
         static extern uint dracoEncoderGetEncodedVertexCount(IntPtr encoder);
@@ -518,11 +526,12 @@ namespace Draco.Encode
         internal static extern unsafe void dracoEncoderGetEncodeBuffer(IntPtr encoder, out void* data, out ulong size);
 
         [DllImport(DracoInstance.k_DracoUnityLib)]
+        [return: MarshalAs(UnmanagedType.I1)]
         static extern bool dracoEncoderSetIndices(
             IntPtr encoder,
             DataType indexComponentType,
             uint indexCount,
-            bool flip,
+            [MarshalAs(UnmanagedType.I1)] bool flip,
             IntPtr indices
             );
 
@@ -533,7 +542,7 @@ namespace Draco.Encode
             DataType dracoDataType,
             int componentCount,
             int stride,
-            bool flip,
+            [MarshalAs(UnmanagedType.I1)] bool flip,
             IntPtr data);
     }
 }

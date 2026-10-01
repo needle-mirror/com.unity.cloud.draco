@@ -1,14 +1,13 @@
 // SPDX-FileCopyrightText: 2024 Unity Technologies and the Draco for Unity authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if UNITY_2023_3_OR_NEWER || UNITY_2022_3
-#define VISION_OS_SUPPORTED
-#endif
-
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+#if UNITY_6000_5_OR_NEWER
+using Unity.Scripting.LifecycleManagement;
+#endif
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Build;
@@ -20,10 +19,13 @@ namespace Draco.Editor
     {
         public const string packagePath = "Packages/com.unity.cloud.draco/Runtime/Plugins/";
 
-        internal static readonly Dictionary<GUID, int> webAssemblyLibraries = new Dictionary<GUID, int>()
+#if UNITY_6000_5_OR_NEWER
+        // AutoStaticsCleanup does not work with C# 9.0, so we're not using it until Unity 7
+        [NoAutoStaticsCleanup]
+#endif
+        internal static readonly Dictionary<GUID, int> webAssemblyLibraries = new()
         {
             // Database of WebAssembly library files within folder `Runtime/Plugins/WebGL`
-            [new GUID("300cc74d74bc64ca78d3fe7d50cb5439")] = 2022, // 2022/libdraco_unity.a
             [new GUID("9ab284c4ad5904cf09339d3522f7b10d")] = 2023, // 2023/libdraco_unity.a
         };
 
@@ -47,9 +49,7 @@ namespace Draco.Editor
                     {
                         case BuildTarget.iOS:
                         case BuildTarget.tvOS:
-#if VISION_OS_SUPPORTED
                         case BuildTarget.VisionOS:
-#endif
                             plugin.SetIncludeInBuildDelegate(IncludeAppleLibraryInBuild);
                             break;
                         case BuildTarget.WebGL:
@@ -71,10 +71,8 @@ namespace Draco.Editor
                     return PlayerSettings.iOS.sdkVersion == iOSSdkVersion.SimulatorSDK;
                 case BuildTarget.tvOS:
                     return PlayerSettings.tvOS.sdkVersion == tvOSSdkVersion.Simulator;
-#if VISION_OS_SUPPORTED
                 case BuildTarget.VisionOS:
                     return PlayerSettings.VisionOS.sdkVersion == VisionOSSdkVersion.Simulator;
-#endif
             }
 
             return false;
@@ -122,15 +120,12 @@ namespace Draco.Editor
 
         public static bool IsWebAssemblyCompatible(GUID pluginGuid, UnityVersion unityVersion)
         {
-            var wasm2022 = new UnityVersion("2022.2");
             var wasm2023 = new UnityVersion("2023.2.0a17");
 
             if (webAssemblyLibraries.TryGetValue(pluginGuid, out var majorVersion))
             {
                 switch (majorVersion)
                 {
-                    case 2022:
-                        return unityVersion >= wasm2022 && unityVersion < wasm2023;
                     case 2023:
                         return unityVersion >= wasm2023;
                 }

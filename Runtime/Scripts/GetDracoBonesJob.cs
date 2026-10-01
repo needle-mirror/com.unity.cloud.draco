@@ -7,23 +7,35 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
+#if UNITY_6000_5_OR_NEWER
+using Unity.Scripting.LifecycleManagement;
+#endif
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Draco
 {
     [BurstCompile]
-    unsafe struct GetDracoBonesJob : IJob
+    unsafe partial struct GetDracoBonesJob : IJob
     {
         delegate int GetIndexValueDelegate(IntPtr baseAddress, int index);
 
         // Cached function pointers
+#if UNITY_6000_5_OR_NEWER
+        [AutoStaticsCleanup] static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueInt8Method;
+        [AutoStaticsCleanup] static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueUInt8Method;
+        [AutoStaticsCleanup] static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueInt16Method;
+        [AutoStaticsCleanup] static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueUInt16Method;
+        [AutoStaticsCleanup] static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueInt32Method;
+        [AutoStaticsCleanup] static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueUInt32Method;
+#else
         static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueInt8Method;
         static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueUInt8Method;
         static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueInt16Method;
         static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueUInt16Method;
         static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueInt32Method;
         static FunctionPointer<GetIndexValueDelegate> s_GetIndexValueUInt32Method;
+#endif
 
         public GetDracoBonesJob(
             NativeReference<int> result,
@@ -211,7 +223,7 @@ namespace Draco
             return *(((int*)baseAddress) + index);
         }
 
-#if UNITY_EDITOR
+#if !UNITY_6000_5_OR_NEWER && UNITY_EDITOR
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStaticsOnLoad()
         {

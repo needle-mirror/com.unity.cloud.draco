@@ -437,6 +437,7 @@ namespace Draco
         /// <param name="attr">Resulting attribute pointer</param>
         /// <returns>True if the attribute was retrieved successfully. False otherwise.</returns>
         [DllImport(k_DracoUnityLib)]
+        [return: MarshalAs(UnmanagedType.I1)]
         static extern unsafe bool GetAttributeByType(
             NativeMesh* mesh, AttributeType type, int index, NativeAttribute** attr);
 
@@ -450,6 +451,7 @@ namespace Draco
         /// <param name="attr">Resulting attribute pointer</param>
         /// <returns>True if the attribute was retrieved successfully. False otherwise.</returns>
         [DllImport(k_DracoUnityLib)]
+        [return: MarshalAs(UnmanagedType.I1)]
         static extern unsafe bool
             GetAttributeByUniqueId(NativeMesh* mesh, int uniqueID,
                 NativeAttribute** attr);
@@ -466,12 +468,13 @@ namespace Draco
         /// <param name="flip">If true, triangle vertex order is reverted</param>
         /// <returns>True if extraction succeeded, false otherwise</returns>
         [DllImport(k_DracoUnityLib)]
+        [return: MarshalAs(UnmanagedType.I1)]
         internal static extern unsafe bool GetMeshIndices(
             NativeMesh* mesh,
             DataType dataType,
             void* indices,
             int indicesCount,
-            bool flip
+            [MarshalAs(UnmanagedType.I1)] bool flip
             );
 
         /// <summary>
@@ -486,7 +489,9 @@ namespace Draco
         /// <param name="componentStride">Component stride</param>
         /// <returns>True if retrieving data was successful. False otherwise.</returns>
         [DllImport(k_DracoUnityLib)]
+        [return: MarshalAs(UnmanagedType.I1)]
         internal static extern unsafe bool GetAttributeData(
-            NativeMesh* mesh, NativeAttribute* attr, NativeData** data, bool flip, int componentStride);
+            NativeMesh* mesh, NativeAttribute* attr, NativeData** data, [MarshalAs(UnmanagedType.I1)] bool flip,
+            int componentStride);
     }
 }
