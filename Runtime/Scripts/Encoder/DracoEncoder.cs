@@ -25,6 +25,17 @@ namespace Draco.Encode
             public int offset;
         }
 
+        struct PaddedAttribute
+        {
+            public NativeArray<byte> data;
+            public VertexAttributeFormat format;
+            public int dimension;
+            public int stride;
+        }
+
+        const int k_SkinAttributeDimension = 4;
+        const int k_PadJobBatchSize = 512;
+
         /// <summary>
         /// Applies Draco compression to a given mesh and returns the encoded result (one per sub-mesh)
         /// </summary>
@@ -45,6 +56,19 @@ namespace Draco.Encode
             SpeedSettings speed
         )
         {
+            return await EncodeMesh(unityMesh, quantization, speed, EncodeOptions.None);
+        }
+
+        /// <inheritdoc cref="EncodeMesh(Mesh,QuantizationSettings,SpeedSettings)"/>
+        /// <param name="options">Encode option flags</param>
+        // ReSharper disable once MemberCanBePrivate.Global
+        public static async Task<EncodeResult[]> EncodeMesh(
+            Mesh unityMesh,
+            QuantizationSettings quantization,
+            SpeedSettings speed,
+            EncodeOptions options
+        )
+        {
             DracoDecoder.CertifySupportedPlatform(
 #if UNITY_EDITOR
                 false
@@ -60,7 +84,7 @@ namespace Draco.Encode
             var dataArray = Mesh.AcquireReadOnlyMeshData(unityMesh);
             var data = dataArray[0];
 
-            var result = await EncodeMesh(unityMesh, data, quantization, speed);
+            var result = await EncodeMesh(unityMesh, data, quantization, speed, options);
 
             dataArray.Dispose();
             return result;
@@ -90,6 +114,20 @@ namespace Draco.Encode
             Mesh.MeshData meshData,
             QuantizationSettings quantization,
             SpeedSettings speed
+        )
+        {
+            return await EncodeMesh(mesh, meshData, quantization, speed, EncodeOptions.None);
+        }
+
+        /// <inheritdoc cref="EncodeMesh(Mesh,Mesh.MeshData,QuantizationSettings,SpeedSettings)"/>
+        /// <param name="options">Encode option flags</param>
+        // ReSharper disable once MemberCanBePrivate.Global
+        public static async Task<EncodeResult[]> EncodeMesh(
+            Mesh mesh,
+            Mesh.MeshData meshData,
+            QuantizationSettings quantization,
+            SpeedSettings speed,
+            EncodeOptions options
         )
         {
 #if !UNITY_EDITOR
@@ -137,96 +175,121 @@ namespace Draco.Encode
             }
 
             var vDataPtr = GetReadOnlyPointers(streamCount, vData);
+
+            var paddedAttributes = (options & EncodeOptions.PadSkinAttributesToFour) != 0
+                ? PadSkinAttributes(mesh, attributeDataDict, strides, vDataPtr)
+                : null;
             Profiler.EndSample(); // EncodeMesh.Prepare
 
-            for (var subMeshIndex = 0; subMeshIndex < mesh.subMeshCount; subMeshIndex++)
+            try
             {
-
-                Profiler.BeginSample("EncodeMesh.SubMesh.Prepare");
-                var subMesh = mesh.GetSubMesh(subMeshIndex);
-
-                if (subMesh.topology != MeshTopology.Triangles && subMesh.topology != MeshTopology.Points)
+                for (var subMeshIndex = 0; subMeshIndex < mesh.subMeshCount; subMeshIndex++)
                 {
-                    Debug.LogError($"Mesh topology {subMesh.topology} is not supported");
-                    return null;
-                }
 
-                var dracoEncoder = subMesh.topology == MeshTopology.Triangles
-                    ? dracoEncoderCreate(mesh.vertexCount)
-                    : dracoEncoderCreatePointCloud(mesh.vertexCount);
+                    Profiler.BeginSample("EncodeMesh.SubMesh.Prepare");
+                    var subMesh = mesh.GetSubMesh(subMeshIndex);
 
-                var attributeIds = new Dictionary<VertexAttribute, (uint identifier, int dimensions)>();
+                    if (subMesh.topology != MeshTopology.Triangles && subMesh.topology != MeshTopology.Points)
+                    {
+                        Debug.LogError($"Mesh topology {subMesh.topology} is not supported");
+                        return null;
+                    }
 
-                foreach (var attributeTuple in attributeDataDict)
-                {
-                    var attribute = attributeTuple.Key;
-                    var attrData = attributeTuple.Value;
-                    var format = mesh.GetVertexAttributeFormat(attribute);
-                    var dimension = mesh.GetVertexAttributeDimension(attribute);
-                    var stride = strides[attrData.stream];
-                    var baseAddr = vDataPtr[attrData.stream] + attrData.offset;
-                    var id = dracoEncoderSetAttribute(
-                        dracoEncoder,
-                        (int)GetAttributeType(attribute),
-                        GetDataType(format),
-                        dimension,
-                        stride,
-                        DracoInstance.ConvertSpace(attribute),
-                        baseAddr
+                    var dracoEncoder = subMesh.topology == MeshTopology.Triangles
+                        ? dracoEncoderCreate(mesh.vertexCount)
+                        : dracoEncoderCreatePointCloud(mesh.vertexCount);
+
+                    var attributeIds = new Dictionary<VertexAttribute, (uint identifier, int dimensions)>();
+
+                    foreach (var attributeTuple in attributeDataDict)
+                    {
+                        var attribute = attributeTuple.Key;
+                        var attrData = attributeTuple.Value;
+                        VertexAttributeFormat format;
+                        int dimension;
+                        int stride;
+                        IntPtr baseAddr;
+                        if (paddedAttributes != null && paddedAttributes.TryGetValue(attribute, out var padded))
+                        {
+                            format = padded.format;
+                            dimension = padded.dimension;
+                            stride = padded.stride;
+                            baseAddr = GetReadOnlyPointer(padded.data);
+                        }
+                        else
+                        {
+                            format = mesh.GetVertexAttributeFormat(attribute);
+                            dimension = mesh.GetVertexAttributeDimension(attribute);
+                            stride = strides[attrData.stream];
+                            baseAddr = vDataPtr[attrData.stream] + attrData.offset;
+                        }
+                        var id = dracoEncoderSetAttribute(
+                            dracoEncoder,
+                            (int)GetAttributeType(attribute),
+                            GetDataType(format),
+                            dimension,
+                            stride,
+                            DracoInstance.ConvertSpace(attribute),
+                            baseAddr
+                            );
+                        attributeIds[attribute] = (id, dimension);
+                    }
+
+                    if (subMesh.topology == MeshTopology.Triangles)
+                    {
+                        var indices = mesh.GetIndices(subMeshIndex);
+                        DracoEncoderSetIndicesWrapper(
+                            dracoEncoder,
+                            DataType.UInt32,
+                            indices,
+                            true
                         );
-                    attributeIds[attribute] = (id, dimension);
-                }
+                    }
 
-                if (subMesh.topology == MeshTopology.Triangles)
-                {
-                    var indices = mesh.GetIndices(subMeshIndex);
-                    DracoEncoderSetIndicesWrapper(
+                    // For both encoding and decoding (0 = slow and best compression; 10 = fast)
+                    dracoEncoderSetCompressionSpeed(
                         dracoEncoder,
-                        DataType.UInt32,
-                        indices,
-                        true
+                        speed.encodingSpeed,
+                        speed.decodingSpeed
                     );
+                    dracoEncoderSetQuantizationBits(
+                        dracoEncoder,
+                        quantization.positionQuantization,
+                        quantization.normalQuantization,
+                        quantization.texCoordQuantization,
+                        quantization.colorQuantization,
+                        QuantizationSettings.genericQuantization
+                    );
+
+                    var encodeJob = new EncodeJob
+                    {
+                        dracoEncoder = dracoEncoder
+                    };
+
+                    Profiler.EndSample(); //EncodeMesh.SubMesh.Prepare
+
+                    var jobHandle = encodeJob.Schedule();
+                    while (!jobHandle.IsCompleted)
+                    {
+                        await Task.Yield();
+                    }
+                    jobHandle.Complete();
+
+                    Profiler.BeginSample("EncodeMesh.SubMesh.Aftermath");
+
+                    result[subMeshIndex] = new EncodeResult(
+                        dracoEncoder,
+                        dracoEncoderGetEncodedIndexCount(dracoEncoder),
+                        dracoEncoderGetEncodedVertexCount(dracoEncoder),
+                        attributeIds
+                    );
+
+                    Profiler.EndSample(); // EncodeMesh.SubMesh.Aftermath
                 }
-
-                // For both encoding and decoding (0 = slow and best compression; 10 = fast)
-                dracoEncoderSetCompressionSpeed(
-                    dracoEncoder,
-                    speed.encodingSpeed,
-                    speed.decodingSpeed
-                );
-                dracoEncoderSetQuantizationBits(
-                    dracoEncoder,
-                    quantization.positionQuantization,
-                    quantization.normalQuantization,
-                    quantization.texCoordQuantization,
-                    quantization.colorQuantization,
-                    QuantizationSettings.genericQuantization
-                );
-
-                var encodeJob = new EncodeJob
-                {
-                    dracoEncoder = dracoEncoder
-                };
-
-                Profiler.EndSample(); //EncodeMesh.SubMesh.Prepare
-
-                var jobHandle = encodeJob.Schedule();
-                while (!jobHandle.IsCompleted)
-                {
-                    await Task.Yield();
-                }
-                jobHandle.Complete();
-
-                Profiler.BeginSample("EncodeMesh.SubMesh.Aftermath");
-
-                result[subMeshIndex] = new EncodeResult(
-                    dracoEncoder,
-                    dracoEncoderGetEncodedIndexCount(dracoEncoder),
-                    dracoEncoderGetEncodedVertexCount(dracoEncoder),
-                    attributeIds
-                );
-
-                Profiler.EndSample(); // EncodeMesh.SubMesh.Aftermath
+            }
+            finally
+            {
+                DisposePaddedAttributes(paddedAttributes);
             }
 
             Profiler.BeginSample("EncodeMesh.Aftermath");
@@ -414,6 +477,88 @@ namespace Draco.Encode
                     colorQuantization: colorQuantization
                 ),
                 new SpeedSettings(encodingSpeed, decodingSpeed));
+        }
+
+        /// <summary>
+        /// Creates copies of bone weights and indices with fewer than four components,
+        /// zero-padded to four components. Float16 values are converted to Float32,
+        /// since the native encoder receives them as Float32.
+        /// </summary>
+        static unsafe Dictionary<VertexAttribute, PaddedAttribute> PadSkinAttributes(
+            Mesh mesh,
+            Dictionary<VertexAttribute, AttributeData> attributeDataDict,
+            int[] strides,
+            IntPtr[] vDataPtr
+        )
+        {
+            Dictionary<VertexAttribute, PaddedAttribute> result = null;
+            var vertexCount = mesh.vertexCount;
+            try
+            {
+                foreach (var (attribute, attrData) in attributeDataDict)
+                {
+                    if (attribute != VertexAttribute.BlendWeight && attribute != VertexAttribute.BlendIndices)
+                        continue;
+                    var dimension = mesh.GetVertexAttributeDimension(attribute);
+                    if (dimension >= k_SkinAttributeDimension)
+                        continue;
+
+                    var srcFormat = mesh.GetVertexAttributeFormat(attribute);
+                    var dstFormat = srcFormat == VertexAttributeFormat.Float16
+                        ? VertexAttributeFormat.Float32
+                        : srcFormat;
+                    var srcSize = dimension * srcFormat.GetByteSize();
+                    var dstStride = k_SkinAttributeDimension * dstFormat.GetByteSize();
+                    var data = new NativeArray<byte>(vertexCount * dstStride, Allocator.Persistent);
+                    result ??= new Dictionary<VertexAttribute, PaddedAttribute>();
+                    result[attribute] = new PaddedAttribute
+                    {
+                        data = data,
+                        format = dstFormat,
+                        dimension = k_SkinAttributeDimension,
+                        stride = dstStride
+                    };
+
+                    var dst = (byte*)data.GetUnsafePtr();
+                    var src = (byte*)(vDataPtr[attrData.stream] + attrData.offset);
+                    var srcStride = strides[attrData.stream];
+                    if (srcFormat == VertexAttributeFormat.Float16)
+                    {
+                        new ConvertHalfToFloatJob
+                        {
+                            input = src,
+                            inputStride = srcStride,
+                            output = dst,
+                            outputStride = dstStride,
+                            dimension = dimension
+                        }.ScheduleParallel(vertexCount, k_PadJobBatchSize, default).Complete();
+                    }
+                    else
+                    {
+                        UnsafeUtility.MemCpyStride(dst, dstStride, src, srcStride, srcSize, vertexCount);
+                    }
+                }
+            }
+            catch
+            {
+                DisposePaddedAttributes(result);
+                throw;
+            }
+            return result;
+        }
+
+        static void DisposePaddedAttributes(Dictionary<VertexAttribute, PaddedAttribute> paddedAttributes)
+        {
+            if (paddedAttributes == null) return;
+            foreach (var padded in paddedAttributes.Values)
+            {
+                padded.data.Dispose();
+            }
+        }
+
+        static unsafe IntPtr GetReadOnlyPointer(NativeArray<byte> data)
+        {
+            return (IntPtr)data.GetUnsafeReadOnlyPtr();
         }
 
         static unsafe IntPtr[] GetReadOnlyPointers(int count, NativeArray<byte>[] vData)

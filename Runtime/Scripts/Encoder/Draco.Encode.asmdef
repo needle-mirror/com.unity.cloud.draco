@@ -3,6 +3,7 @@
     "rootNamespace": "Draco.Encode",
     "references": [
         "Draco",
+        "Unity.Burst",
         "Unity.Mathematics"
     ],
     "includePlatforms": [],

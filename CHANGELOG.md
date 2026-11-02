@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - 2026-11-02
+
+### Added
+- (Export) [EncodeOptions](xref:Draco.Encode.EncodeOptions) parameter for [EncodeMesh](xref:Draco.Encode.DracoEncoder.EncodeMesh*). Its `PadSkinAttributesToFour` flag encodes bone weights and indices with four components (zero-padded), as required for glTF `JOINTS_0`/`WEIGHTS_0`.
+
+### Changed
+- (Documentation) Documented the Visual C++ runtime dependency of the native Windows library and how to ship it with applications.
+- (Sample) Replaced obsolete `Object.FindObjectOfType` with `Object.FindFirstObjectByType` in the *SceneEncodeDecode* sample.
+
+### Fixed
+- (Editor) Original synchronization context is restored when a synchronously run import task throws.
+- Burst compiler error on Unity 7 (FunctionPointer `Draco.GetDracoBonesJob.GetIndexValueDelegate.Invoke` wrapper generation failed).
+
 ## [5.5.0] - 2026-10-01
 
 ### Added

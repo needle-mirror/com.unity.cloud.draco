@@ -62,7 +62,7 @@ namespace Draco.Sample.SceneEncodeDecode.Editor
 
             var instances = new Dictionary<TextAsset, DecodeInstance>();
 
-            var meshDecoder = Object.FindObjectOfType<DracoSceneDecoder>();
+            var meshDecoder = Object.FindFirstObjectByType<DracoSceneDecoder>();
             if (meshDecoder == null && setupMeshDecoder)
             {
                 meshDecoder = new GameObject("MeshDecoder").AddComponent<DracoSceneDecoder>();

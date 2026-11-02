@@ -70,8 +70,14 @@ namespace Draco.Editor
                     sync.EndMessageLoop();
                 }
             }, null);
-            sync.BeginMessageLoop();
-            SynchronizationContext.SetSynchronizationContext(oldContext);
+            try
+            {
+                sync.BeginMessageLoop();
+            }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(oldContext);
+            }
             return ret;
         }
 

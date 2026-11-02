@@ -40,6 +40,10 @@ Quantization is specified per attribute type:
 
 Alternatively the ideal position quantization can be calculated from the mesh's size, its size/scale in the world and the desired precision. Have a look at [QuantizationSettings.FromWorldSize](xref:Draco.Encode.QuantizationSettings.FromWorldSize*) for details.
 
+#### Encode options
+
+[EncodeOptions](xref:Draco.Encode.EncodeOptions) flags alter how attributes are encoded. For example, [`PadSkinAttributesToFour`](xref:Draco.Encode.EncodeOptions.PadSkinAttributesToFour) encodes bone weights and indices with four components (zero-padded), as glTF requires for `JOINTS_0`/`WEIGHTS_0`, even if the source mesh has fewer bone influences per vertex.
+
 ### Encode using the advanced Mesh API
 
 If you want to encode multiple Meshes you'll get the best performance by using the advanced Mesh API [EncodeMesh](xref:Draco.Encode.DracoEncoder.EncodeMesh*) overloads that take a [Mesh](xref:UnityEngine.Mesh)/[MeshData](xref:UnityEngine.Mesh.MeshData) pair as first parameters.

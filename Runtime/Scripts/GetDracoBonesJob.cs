@@ -18,7 +18,7 @@ namespace Draco
     [BurstCompile]
     unsafe partial struct GetDracoBonesJob : IJob
     {
-        delegate int GetIndexValueDelegate(IntPtr baseAddress, int index);
+        internal delegate int GetIndexValueDelegate(IntPtr baseAddress, int index);
 
         // Cached function pointers
 #if UNITY_6000_5_OR_NEWER
