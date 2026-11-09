@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     /// <summary>
     /// Attribute data type as defined in draco_types.h

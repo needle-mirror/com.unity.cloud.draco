@@ -7,7 +7,7 @@ using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     [BurstCompile]
     struct GeneratePointCloudIndicesJob : IJob

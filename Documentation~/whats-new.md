@@ -1,49 +1,21 @@
 # What's new
 
-Here's what changes since version 4.x (and 3.x respectively).
+## Version 6.0
 
-## Encoding
+### C# Implementation
 
-Encoding got much faster due to the use of the C# Job System (threads) and avoiding full memory copies of the result. All encoding methods are async now. Readonly meshes now can be encoded in the Editor.
+Encoding and decoding are implemented in C# now, replacing the native Draco plug-in binaries. As a result:
 
-## More Platforms
+- Every platform Unity supports is expected to work, without platform or Unity version specific binaries.
 
-Support for a couple of platforms was added
+#### Performance
 
-- iOS simulator
-- [Windows ARM64](https://learn.microsoft.com/en-us/windows/arm/overview)
-- Android x86_64 (which enables usage on Chrome OS, Magic Leap 2 and certain Android emulators)
+Decoding performance is on par with the native plug-in of version 5, or better. Decoding runs in [Burst](https://docs.unity3d.com/Packages/com.unity.burst@latest) compiled jobs, so the performance hardly depends on the scripting backend (IL2CPP or CoreCLR).
 
-## WebGL now builds on all supported Unity versions
+Measurements in a macOS standalone player (Apple M4 Max), comparing version 6 to version 5:
 
-WebGL binaries are not compatible across Unity versions. To overcome this shortcoming, WebGL native binaries are now provided in a separate sub-package that is installed automatically.
+- Decoding meshes with ten thousand vertices or more takes about 10% less time (4% to 18% less, depending on the mesh and settings), with both IL2CPP (Unity 6.3) and CoreCLR (Unity 7.0).
+- Decoding small meshes (under 1 ms) takes as long as before. The frame overhead of the asynchronous API dominates their decoding time.
+- Decoding many small meshes in parallel can be slower. Decoding 8 to 32 small meshes at once took up to 1.7 times as long with IL2CPP. With CoreCLR, the difference was small.
 
-### Advanced Mesh API support
-
-Support for efficient, self-managed encoding of multiple meshes. Users may use the advanced Mesh API to acquire readable mesh data for multiple meshes at once and pass the data on to new `DracoEncoder.EncodeMesh` overloads that accept said `MeshData`.
-
-## API Cleanup
-
-The API was refactored, so that decoding Draco can be as simple as this:
-
-```csharp
-using Draco;
-
-var mesh = await DracoDecoder.DecodeMesh(data);
-```
-
-If you've used [`DracoMeshLoader`](xref:Draco.DracoMeshLoader) in the past, don't worry. It's still there for compatibility reasons. Make sure to transition to [`DracoDecoder`](xref:Draco.DracoDecoder) soon though.
-
-## Package Samples
-
-Three package samples have been added:
-
-- [*Draco Decoding*](sample-decode.md)
-- [*Draco Encoding*](sample-encode.md)
-- [*Scene/GameObject Encoding/Decoding via Menu*](sample-scene-encode-decode.md)
-
-> **Note**: Parts of the *Scene/GameObject Encoding/Decoding via Menu* sample, including the *Tools* menu used to be part of the main package and have been moved.
-
-## Fixes
-
-Decoded meshes' bounds are calculated and returned or set accordingly. Point clouds' index buffer is properly initialized. With that potential rendering and culling problems should be gone.
+Encoding performance was not measured. Other CPU architectures and platforms (for example, mobile or Web) may show different results.

@@ -9,7 +9,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     [BurstCompile]
     unsafe struct GetDracoDataBoundsJob : IJob
@@ -21,7 +21,7 @@ namespace Draco
         public NativeReference<DracoResources> resources;
 
         [ReadOnly, NativeDisableUnsafePtrRestriction]
-        public NativeAttribute* attribute;
+        public NativeAttribute attribute;
 
         [ReadOnly]
         public bool flip;
@@ -46,29 +46,28 @@ namespace Draco
                 return;
             }
             var dracoMesh = resources.Value.mesh;
-            NativeData* data = null;
             if (!DracoInstance.GetAttributeData(
                     dracoMesh,
                     attribute,
-                    &data,
+                    out var data,
                     flip,
                     componentStride
                 ))
             {
                 return;
             }
-            var elementSize = DracoInstance.DataTypeSize(data->dataType) * componentStride;
+            var elementSize = DracoInstance.DataTypeSize(data.dataType) * componentStride;
             var dst = mesh.GetVertexData<byte>(streamIndex)
                 .GetSubArray(baseVertex * elementSize, dracoMesh->numVertices * elementSize);
             var dstPtr = dst.GetUnsafePtr();
             for (var v = 0; v < dracoMesh->numVertices; v++)
             {
-                var value = *(float3*)((byte*)data->data + elementSize * v);
+                var value = *(float3*)((byte*)data.data + elementSize * v);
                 bounds[0] = math.min(bounds[0], value);
                 bounds[1] = math.max(bounds[1], value);
                 *((float3*)(((byte*)dstPtr) + elementSize * v)) = value;
             }
-            DracoInstance.ReleaseDracoData(&data);
+            DracoInstance.ReleaseDracoData(ref data);
         }
     }
 }

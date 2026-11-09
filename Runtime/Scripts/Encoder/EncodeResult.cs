@@ -6,14 +6,16 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Rendering;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace Draco.Encode
+namespace Unity.Cloud.Draco.Encode
 {
     /// <summary>
     /// Contains encoded data and additional meta information.
     /// The responsibility to dispose this struct and the native resources behind it (via <see cref="Dispose"/>)
     /// is handed over to the receiver.
     /// </summary>
+    [MovedFrom(true, sourceNamespace: "Draco.Encode", sourceAssembly: "Draco.Encode")]
     public unsafe struct EncodeResult : IDisposable
     {
 

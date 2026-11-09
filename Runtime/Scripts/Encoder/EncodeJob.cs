@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System;
+using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 
-namespace Draco.Encode
+namespace Unity.Cloud.Draco.Encode
 {
+    [BurstCompile]
     struct EncodeJob : IJob
     {
         [NativeDisableUnsafePtrRestriction]

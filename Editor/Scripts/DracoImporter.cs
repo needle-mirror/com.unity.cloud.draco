@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.IO;
-using UnityEngine;
 using UnityEditor.AssetImporters;
+using UnityEngine;
 
-namespace Draco.Editor
+namespace Unity.Cloud.Draco.Editor
 {
 
     [ScriptedImporter(1, "drc")]

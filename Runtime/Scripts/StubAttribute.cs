@@ -4,7 +4,7 @@
 using System;
 using UnityEngine.Rendering;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     sealed class StubAttribute : AttributeBase
     {

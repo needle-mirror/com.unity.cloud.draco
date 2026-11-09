@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace Draco.Encode
+namespace Unity.Cloud.Draco.Encode
 {
     /// <summary>
     /// Optional flags that alter how a mesh is encoded.
     /// </summary>
     [Flags]
+    [MovedFrom(true, sourceNamespace: "Draco.Encode", sourceAssembly: "Draco.Encode")]
     public enum EncodeOptions
     {
         /// <summary>

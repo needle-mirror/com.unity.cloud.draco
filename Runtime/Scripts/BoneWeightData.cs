@@ -4,13 +4,15 @@
 using System;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     /// <summary>
     /// Draco encoded meshes might contain bone weights and indices that cannot be applied to the resulting Unity
     /// mesh right away. This class provides them and offers methods to apply them to Unity meshes.
     /// </summary>
+    [MovedFrom(true, sourceNamespace: "Draco", sourceAssembly: "Draco")]
     public sealed class BoneWeightData : IDisposable
     {
         NativeArray<byte> m_BonesPerVertex;

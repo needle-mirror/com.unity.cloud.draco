@@ -3,7 +3,7 @@
 
 using UnityEngine;
 
-namespace Draco.Sample.Decode
+namespace Unity.Cloud.Draco.Sample.Decode
 {
 
     [RequireComponent(typeof(MeshFilter))]
@@ -64,7 +64,7 @@ namespace Draco.Sample.Decode
 
                 // If Draco mesh has bone weights, apply them now.
                 // To get these, you have to supply the correct attribute IDs
-                // to `ConvertDracoMeshToUnity` above (optional parameters).
+                // to `DecodeMesh` above (via the `attributeIdMap` parameter).
                 if (result.boneWeightData != null)
                 {
                     result.boneWeightData.ApplyOnMesh(mesh);

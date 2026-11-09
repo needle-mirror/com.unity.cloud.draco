@@ -17,7 +17,7 @@ Draco bit-stream version 2,2 does not support vertex attribute types *tangent* a
 
 ## Sub-mesh
 
-Multiple [sub-meshes](xref:Mesh.subMeshCount) are currently not supported. [DracoDecoder](xref:Draco.DracoDecoder) will always return a mesh with a single sub-mesh and the [DracoEncoder](xref:Draco.Encode.DracoEncoder) produces one result/Draco&trade; mesh per sub-mesh.
+Multiple [sub-meshes](xref:Mesh.subMeshCount) are currently not supported. [DracoDecoder](xref:Unity.Cloud.Draco.DracoDecoder) will always return a mesh with a single sub-mesh and the [DracoEncoder](xref:Unity.Cloud.Draco.Encode.DracoEncoder) produces one result/Draco&trade; mesh per sub-mesh.
 
 ## Animation
 

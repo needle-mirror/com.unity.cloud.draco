@@ -5,7 +5,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace Draco.Sample.SceneEncodeDecode.Editor
+namespace Unity.Cloud.Draco.Sample.SceneEncodeDecode.Editor
 {
     struct DracoMeshAsset
     {

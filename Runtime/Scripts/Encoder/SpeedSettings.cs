@@ -3,8 +3,9 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace Draco.Encode
+namespace Unity.Cloud.Draco.Encode
 {
     /// <summary>
     /// Sets the desired encoding and decoding speed for the given options.
@@ -15,6 +16,7 @@ namespace Draco.Encode
     /// <see cref="encodingSpeed"/> may allow the encoder to choose the optimal method out of the available features for
     /// the given <see cref="decodingSpeed"/>.
     /// </summary>
+    [MovedFrom(true, sourceNamespace: "Draco.Encode", sourceAssembly: "Draco.Encode")]
     public readonly struct SpeedSettings
     {
         /// <summary>

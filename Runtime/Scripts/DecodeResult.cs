@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     /// <summary>
     /// Holds the result of the Draco decoding process.
     /// </summary>
+    [MovedFrom(true, sourceNamespace: "Draco", sourceAssembly: "Draco")]
     public readonly struct DecodeResult
     {
         /// <summary>

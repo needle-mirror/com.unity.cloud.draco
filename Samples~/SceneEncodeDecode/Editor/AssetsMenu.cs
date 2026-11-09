@@ -3,11 +3,11 @@
 
 using System.IO;
 using System.Threading.Tasks;
-using Draco.Encode;
+using Unity.Cloud.Draco.Encode;
 using UnityEditor;
 using UnityEngine;
 
-namespace Draco.Sample.SceneEncodeDecode.Editor
+namespace Unity.Cloud.Draco.Sample.SceneEncodeDecode.Editor
 {
     static class AssetsMenu
     {

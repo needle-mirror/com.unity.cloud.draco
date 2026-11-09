@@ -7,7 +7,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     sealed class DracoSubMesh : IDisposable
     {

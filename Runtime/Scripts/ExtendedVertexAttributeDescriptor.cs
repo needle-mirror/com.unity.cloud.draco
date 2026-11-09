@@ -5,7 +5,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     class ExtendedVertexAttributeDescriptor
     {

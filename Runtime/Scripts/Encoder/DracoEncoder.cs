@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -11,12 +10,14 @@ using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace Draco.Encode
+namespace Unity.Cloud.Draco.Encode
 {
     /// <summary>
     /// Provides Draco encoding capabilities.
     /// </summary>
+    [MovedFrom(true, sourceNamespace: "Draco.Encode", sourceAssembly: "Draco.Encode")]
     public static class DracoEncoder
     {
         struct AttributeData
@@ -69,11 +70,6 @@ namespace Draco.Encode
             EncodeOptions options
         )
         {
-            DracoDecoder.CertifySupportedPlatform(
-#if UNITY_EDITOR
-                false
-#endif
-            );
 #if !UNITY_EDITOR
             if (!unityMesh.isReadable)
             {
@@ -238,12 +234,7 @@ namespace Draco.Encode
                     if (subMesh.topology == MeshTopology.Triangles)
                     {
                         var indices = mesh.GetIndices(subMeshIndex);
-                        DracoEncoderSetIndicesWrapper(
-                            dracoEncoder,
-                            DataType.UInt32,
-                            indices,
-                            true
-                        );
+                        DracoEncoderSetIndicesWrapper(dracoEncoder, indices);
                     }
 
                     // For both encoding and decoding (0 = slow and best compression; 10 = fast)
@@ -300,183 +291,6 @@ namespace Draco.Encode
 
             Profiler.EndSample();
             return result;
-        }
-
-        /// <summary>
-        /// Applies Draco compression to a given mesh and returns the encoded result (one per sub-mesh)
-        /// The quality and quantization parameters are calculated from the mesh's bounds, its worldScale and desired precision.
-        /// The quantization parameters help to find a balance between compressed size and quality / precision.
-        /// </summary>
-        /// <param name="unityMesh">Input mesh</param>
-        /// <param name="worldScale">Local-to-world scale this mesh is present in the scene</param>
-        /// <param name="precision">Desired minimum precision in world units</param>
-        /// <param name="encodingSpeed">Encoding speed level. 0 means slow and small. 10 is fastest.</param>
-        /// <param name="decodingSpeed">Decoding speed level. 0 means slow and small. 10 is fastest.</param>
-        /// <param name="normalQuantization">Normal quantization</param>
-        /// <param name="texCoordQuantization">Texture coordinate quantization</param>
-        /// <param name="colorQuantization">Color quantization</param>
-        /// <param name="genericQuantization">Generic quantization (e.g. blend weights and indices). unused at the moment</param>
-        /// <returns>Encoded data (one per sub-mesh)</returns>
-        /// <seealso cref="EncodeMesh(Mesh,QuantizationSettings,SpeedSettings)"/>
-        /// <seealso cref="QuantizationSettings.FromWorldSize"/>
-        [Obsolete("Use EncodeMesh(Mesh,QuantizationSettings,SpeedSettings) instead")]
-        public static async Task<EncodeResult[]> EncodeMesh(
-            Mesh unityMesh,
-            Vector3 worldScale,
-            float precision = .001f,
-            int encodingSpeed = 0,
-            int decodingSpeed = 4,
-            int normalQuantization = 10,
-            int texCoordQuantization = 12,
-            int colorQuantization = 8,
-            int genericQuantization = 12
-            )
-        {
-            return await EncodeMesh(
-                unityMesh,
-                QuantizationSettings.FromWorldSize(
-                    unityMesh.bounds,
-                    worldScale,
-                    precision,
-                    normalQuantization,
-                    texCoordQuantization,
-                    colorQuantization
-                ),
-                new SpeedSettings(encodingSpeed, decodingSpeed)
-            );
-        }
-
-        /// <summary>
-        /// Applies Draco compression to a given mesh/meshData and returns the encoded result (one per sub-mesh)
-        /// The user is responsible for
-        /// <see cref="UnityEngine.Mesh.AcquireReadOnlyMeshData(Mesh)">acquiring the readable MeshData</see>
-        /// and disposing it.
-        /// The quality and quantization parameters are calculated from the mesh's bounds, its worldScale and desired precision.
-        /// The quantization parameters help to find a balance between compressed size and quality / precision.
-        /// </summary>
-        /// <param name="mesh">Input mesh</param>
-        /// <param name="meshData">Previously acquired readable mesh data</param>
-        /// <param name="worldScale">Local-to-world scale this mesh is present in the scene</param>
-        /// <param name="precision">Desired minimum precision in world units</param>
-        /// <param name="encodingSpeed">Encoding speed level. 0 means slow and small. 10 is fastest.</param>
-        /// <param name="decodingSpeed">Decoding speed level. 0 means slow and small. 10 is fastest.</param>
-        /// <param name="normalQuantization">Normal quantization</param>
-        /// <param name="texCoordQuantization">Texture coordinate quantization</param>
-        /// <param name="colorQuantization">Color quantization</param>
-        /// <param name="genericQuantization">Generic quantization (e.g. blend weights and indices). unused at the moment</param>
-        /// <returns>Encoded data (one per sub-mesh)</returns>
-        /// <seealso cref="EncodeMesh(Mesh,Mesh.MeshData,QuantizationSettings,SpeedSettings)"/>
-        /// <seealso cref="QuantizationSettings.FromWorldSize"/>
-        [Obsolete("Use EncodeMesh(Mesh,Mesh.MeshData,QuantizationSettings,SpeedSettings) instead")]
-        public static async Task<EncodeResult[]> EncodeMesh(
-            Mesh mesh,
-            Mesh.MeshData meshData,
-            Vector3 worldScale,
-            float precision = .001f,
-            int encodingSpeed = 0,
-            int decodingSpeed = 4,
-            int normalQuantization = 10,
-            int texCoordQuantization = 12,
-            int colorQuantization = 8,
-            int genericQuantization = 12
-            )
-        {
-            return await EncodeMesh(
-                mesh,
-                meshData,
-                QuantizationSettings.FromWorldSize(
-                    mesh.bounds,
-                    worldScale,
-                    precision,
-                    normalQuantization,
-                    texCoordQuantization,
-                    colorQuantization
-                    ),
-                new SpeedSettings(encodingSpeed, decodingSpeed)
-                );
-        }
-
-        /// <summary>
-        /// Applies Draco compression to a given mesh and returns the encoded result (one per sub-mesh)
-        /// The quantization parameters help to find a balance between encoded size and quality / precision.
-        /// </summary>
-        /// <param name="unityMesh">Input mesh</param>
-        /// <param name="encodingSpeed">Encoding speed level. 0 means slow and small. 10 is fastest.</param>
-        /// <param name="decodingSpeed">Decoding speed level. 0 means slow and small. 10 is fastest.</param>
-        /// <param name="positionQuantization">Vertex position quantization</param>
-        /// <param name="normalQuantization">Normal quantization</param>
-        /// <param name="texCoordQuantization">Texture coordinate quantization</param>
-        /// <param name="colorQuantization">Color quantization</param>
-        /// <param name="genericQuantization">Generic quantization (e.g. blend weights and indices). unused at the moment</param>
-        /// <returns>Encoded data (one per sub-mesh)</returns>
-        /// <seealso cref="EncodeMesh(Mesh,QuantizationSettings,SpeedSettings)"/>
-        [Obsolete("Use EncodeMesh(Mesh,QuantizationSettings,SpeedSettings) instead")]
-        public static async Task<EncodeResult[]> EncodeMesh(
-            Mesh unityMesh,
-            // ReSharper disable once MethodOverloadWithOptionalParameter
-            int encodingSpeed = 0,
-            int decodingSpeed = 4,
-            int positionQuantization = 14,
-            int normalQuantization = 10,
-            int texCoordQuantization = 12,
-            int colorQuantization = 8,
-            int genericQuantization = 12
-        )
-        {
-            return await EncodeMesh(
-                unityMesh,
-                new QuantizationSettings(
-                    positionQuantization: positionQuantization,
-                    normalQuantization: normalQuantization,
-                    texCoordQuantization: texCoordQuantization,
-                    colorQuantization: colorQuantization
-                ),
-                new SpeedSettings(encodingSpeed, decodingSpeed));
-        }
-
-        /// <summary>
-        /// Applies Draco compression to a given mesh/meshData and returns the encoded result (one per sub-mesh)
-        /// The user is responsible for
-        /// <see cref="UnityEngine.Mesh.AcquireReadOnlyMeshData(Mesh)">acquiring the readable MeshData</see>
-        /// and disposing it.
-        /// The quantization parameters help to find a balance between encoded size and quality / precision.
-        /// </summary>
-        /// <param name="mesh">Input mesh</param>
-        /// <param name="meshData">Previously acquired readable mesh data</param>
-        /// <param name="encodingSpeed">Encoding speed level. 0 means slow and small. 10 is fastest.</param>
-        /// <param name="decodingSpeed">Decoding speed level. 0 means slow and small. 10 is fastest.</param>
-        /// <param name="positionQuantization">Vertex position quantization</param>
-        /// <param name="normalQuantization">Normal quantization</param>
-        /// <param name="texCoordQuantization">Texture coordinate quantization</param>
-        /// <param name="colorQuantization">Color quantization</param>
-        /// <param name="genericQuantization">Generic quantization (e.g. blend weights and indices). unused at the moment</param>
-        /// <returns>Encoded data (one per sub-mesh)</returns>
-        /// <seealso cref="EncodeMesh(Mesh,Mesh.MeshData,QuantizationSettings,SpeedSettings)"/>
-        // ReSharper disable once MemberCanBePrivate.Global
-        [Obsolete("Use EncodeMesh(Mesh,Mesh.MeshData,QuantizationSettings,SpeedSettings) instead")]
-        public static async Task<EncodeResult[]> EncodeMesh(
-            Mesh mesh,
-            Mesh.MeshData meshData,
-            // ReSharper disable once MethodOverloadWithOptionalParameter
-            int encodingSpeed = 0,
-            int decodingSpeed = 4,
-            int positionQuantization = 14,
-            int normalQuantization = 10,
-            int texCoordQuantization = 12,
-            int colorQuantization = 8,
-            int genericQuantization = 12
-        )
-        {
-            return await EncodeMesh(
-                mesh,
-                meshData,
-                new QuantizationSettings(
-                    positionQuantization: positionQuantization,
-                    normalQuantization: normalQuantization,
-                    texCoordQuantization: texCoordQuantization,
-                    colorQuantization: colorQuantization
-                ),
-                new SpeedSettings(encodingSpeed, decodingSpeed));
         }
 
         /// <summary>
@@ -572,17 +386,11 @@ namespace Draco.Encode
             return result;
         }
 
-        static unsafe bool DracoEncoderSetIndicesWrapper(
-            IntPtr encoder,
-            DataType indexComponentType,
-            int[] indices,
-            bool flip
-        )
+        static unsafe void DracoEncoderSetIndicesWrapper(IntPtr encoder, int[] indices)
         {
             fixed (int* indicesData = indices)
             {
-                return dracoEncoderSetIndices(
-                    encoder, indexComponentType, (uint)indices.Length, flip, (IntPtr)indicesData);
+                DracoEncoderApi.SetIndices(encoder, (uint)indices.Length, (uint*)indicesData);
             }
         }
 
@@ -641,53 +449,45 @@ namespace Draco.Encode
             }
         }
 
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        static extern IntPtr dracoEncoderCreate(int vertexCount);
+        static IntPtr dracoEncoderCreate(int vertexCount)
+            => DracoEncoderApi.EncoderCreate(vertexCount);
 
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        static extern IntPtr dracoEncoderCreatePointCloud(int vertexCount);
+        static IntPtr dracoEncoderCreatePointCloud(int vertexCount)
+            => DracoEncoderApi.EncoderCreatePointCloud(vertexCount);
 
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        internal static extern void dracoEncoderRelease(IntPtr encoder);
+        internal static void dracoEncoderRelease(IntPtr encoder)
+            => DracoEncoderApi.EncoderRelease(encoder);
 
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        static extern void dracoEncoderSetCompressionSpeed(IntPtr encoder, int encodingSpeed, int decodingSpeed);
+        static void dracoEncoderSetCompressionSpeed(
+            IntPtr encoder, int encodingSpeed, int decodingSpeed)
+            => DracoEncoderApi.SetCompressionSpeed(encoder, encodingSpeed, decodingSpeed);
 
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        static extern void dracoEncoderSetQuantizationBits(IntPtr encoder, int position, int normal, int uv, int color, int generic);
+        static void dracoEncoderSetQuantizationBits(
+            IntPtr encoder, int position, int normal, int uv, int color, int generic)
+            => DracoEncoderApi.SetQuantizationBits(encoder, position, normal, uv, color, generic);
 
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        internal static extern bool dracoEncoderEncode(
-            IntPtr encoder, [MarshalAs(UnmanagedType.I1)] bool preserveTriangleOrder);
+        internal static bool dracoEncoderEncode(IntPtr encoder, bool preserveTriangleOrder)
+            => DracoEncoderApi.Encode(encoder, preserveTriangleOrder);
 
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        static extern uint dracoEncoderGetEncodedVertexCount(IntPtr encoder);
+        static uint dracoEncoderGetEncodedVertexCount(IntPtr encoder)
+            => DracoEncoderApi.GetEncodedVertexCount(encoder);
 
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        static extern uint dracoEncoderGetEncodedIndexCount(IntPtr encoder);
+        static uint dracoEncoderGetEncodedIndexCount(IntPtr encoder)
+            => DracoEncoderApi.GetEncodedIndexCount(encoder);
 
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        internal static extern unsafe void dracoEncoderGetEncodeBuffer(IntPtr encoder, out void* data, out ulong size);
+        internal static unsafe void dracoEncoderGetEncodeBuffer(
+            IntPtr encoder, out void* data, out ulong size)
+            => DracoEncoderApi.GetEncodeBuffer(encoder, out data, out size);
 
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        static extern bool dracoEncoderSetIndices(
-            IntPtr encoder,
-            DataType indexComponentType,
-            uint indexCount,
-            [MarshalAs(UnmanagedType.I1)] bool flip,
-            IntPtr indices
-            );
-
-        [DllImport(DracoInstance.k_DracoUnityLib)]
-        static extern uint dracoEncoderSetAttribute(
+        static uint dracoEncoderSetAttribute(
             IntPtr encoder,
             int attributeType,
             DataType dracoDataType,
             int componentCount,
             int stride,
-            [MarshalAs(UnmanagedType.I1)] bool flip,
-            IntPtr data);
+            bool flip,
+            IntPtr data)
+            => DracoEncoderApi.SetAttribute(
+                encoder, attributeType, dracoDataType, componentCount, stride, flip, data);
     }
 }

@@ -1,0 +1,16 @@
+{
+    "name": "Unity.Cloud.Draco.Sample.SceneEncodeDecode",
+    "rootNamespace": "Unity.Cloud.Draco.Sample.SceneEncodeDecode",
+    "references": [
+        "Unity.Cloud.Draco"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

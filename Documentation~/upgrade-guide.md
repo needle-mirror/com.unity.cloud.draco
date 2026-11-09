@@ -2,49 +2,36 @@
 
 These guides will help you upgrade your project to use the latest version of *Draco for Unity*. If you still encounter problems, help us improving this guide and *Draco for Unity* in general by reaching out or by raising an issue.
 
-## Upgrading to *Draco for Unity* 5.0.0
+## Upgrading to *Draco for Unity* 6.0.0
 
-Minimum required Unity version was decreased to 2020.3, so you are able to upgrade from DracoUnity 3 (skipping version 4).
+Encoding and decoding are implemented in C# now. The package doesn't contain native plug-in binaries anymore.
 
-Support for building to WebGL is provided by a Unity version specific WebGL sub-package. Upon package installation, you'll be prompted to install said package automatically.
+### Namespace and assembly changes
 
-Assembly definition `DracoEditor` was renamed to `Draco.Editor`, so make sure you update your references.
+The `Draco` namespace and all its sub-namespaces moved to `Unity.Cloud.Draco` (e.g. `Draco.Encode` to `Unity.Cloud.Draco.Encode`). Unity's API Updater converts your code automatically when you open the project.
+
+Assembly definitions were renamed accordingly:
+
+| Old name       | New name                   |
+|----------------|----------------------------|
+| `Draco`        | `Unity.Cloud.Draco`        |
+| `Draco.Encode` | `Unity.Cloud.Draco.Encode` |
+| `Draco.Editor` | `Unity.Cloud.Draco.Editor` |
+
+If one of your assembly definitions references them by name, update the references manually.
 
 ### API changes
 
-[DracoMeshLoader](xref:Draco.DracoMeshLoader) is now obsolete. Please use the [DecodeMesh](xref:Draco.DracoDecoder.DecodeMesh*) methods for decoding Draco data from now on. Instead of many individual parameters, [`decodeSettings`](xref:Draco.DecodeSettings) and `attributeIdMap` now encapsulate all settings to fine-tune decoding. See [Attribute assignment via Draco identifier](use-case-decoding.md#attribute-assignment-via-draco-identifier) for details about attribute assignment via `attributeIdMap`.
+Previously obsolete API was removed. If your code still uses it, replace it as follows:
 
-In similar fashion, instead of many individual encode settings parameters, [QuantizationSettings](xref:Draco.Encode.QuantizationSettings) and [SpeedSettings](xref:Draco.Encode.SpeedSettings) can be passed to [EncodeMesh](xref:Draco.Encode.DracoEncoder.EncodeMesh*). The existing overloads have been marked obsolete.
+- `DracoMeshLoader`: Use the [DecodeMesh](xref:Unity.Cloud.Draco.DracoDecoder.DecodeMesh*) methods of [DracoDecoder](xref:Unity.Cloud.Draco.DracoDecoder) instead. Pass bone weight and joint attribute identifiers via an `attributeIdMap` (see [CreateAttributeIdMap](xref:Unity.Cloud.Draco.DracoDecoder.CreateAttributeIdMap*)).
+- `DracoDecoder.DecodeMesh` overloads accepting `NativeSlice<byte>`: Pass the encoded data as `NativeArray<byte>.ReadOnly` (e.g. via `NativeArray<byte>.AsReadOnly()`) or `byte[]` instead.
+- `DracoEncoder.EncodeMesh` overloads with individual speed and quantization parameters: Pass [QuantizationSettings](xref:Unity.Cloud.Draco.Encode.QuantizationSettings) and [SpeedSettings](xref:Unity.Cloud.Draco.Encode.SpeedSettings) instead. Use [QuantizationSettings.FromWorldSize](xref:Unity.Cloud.Draco.Encode.QuantizationSettings.FromWorldSize*) to replace the `worldScale`/`precision` variants.
 
-### Draco Tools Menu
+Things to consider:
 
-If you've used the *Tools* -> *Draco* menu items or one of the classes associated with them, those have been removed from the package and put into the package sample *Scene/GameObject Encoding/Decoding via Menu*. You can install it from the package manager directly to your project.
-
-## Unity Fork
-
-With the release of version 5.0.0 the package name and identifier were changed to *Draco for Unity* (`com.unity.cloud.draco`) for the following reasons:
-
-- Better integration into Unity internal development processes (including quality assurance and support)
-- Distribution via the Unity Package Manager (no scoped libraries required anymore)
-
-For now, both the Unity variant and the original version will receive updates.
-
-### Transition to *Draco for Unity*
-
-The C# namespaces are identical between the variants, so all you need to do is:
-
-- Removed original *Draco 3D Data Compression* (with package identifier `com.atteneder.draco`).
-- Add *Draco for Unity* (`com.unity.cloud.draco`).
-- Update assembly definition references (if your project had any).
-- Update any dependencies in your packages manifest (if your package had any)
-
-### Keep using the original Draco 3D Data Compression
-
-The original *Draco 3D Data Compression* (`com.atteneder.draco`) will still receive identical updates for now. You may choose to continue using it.
-
-If you've installed the packages via the installer script (i.e. via [OpenUPM][OpenUPM] scoped registry - the recommended way), you don't need to change anything. You'll receive updates as usual.
-
-See [Original *Draco 3D Data Compression*](./original.md) for instructions to install the original version from scratch.
+- Draco data encoded with bitstream versions older than 2.2 (meshes) or 2.3 (point clouds) can't be decoded. The previous native plug-in didn't support those either.
+- WebGL sub-packages (`com.unity.cloud.draco.webgl-*`) installed by earlier versions (pre `5.1.0`) aren't automatically removed anymore. They don't conflict with this version, but you can safely remove them from your project via the Package Manager.
 
 ## Trademarks
 
@@ -53,5 +40,4 @@ See [Original *Draco 3D Data Compression*](./original.md) for instructions to in
 *Draco&trade;* is a trademark of [*Google LLC*][GoogleLLC].
 
 [GoogleLLC]: https://about.google/
-[OpenUPM]: https://openupm.com/
 [unity]: https://unity.com

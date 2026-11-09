@@ -3,13 +3,15 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     /// <summary>
     /// Decode setting.
     /// </summary>
     [Flags]
+    [MovedFrom(true, sourceNamespace: "Draco", sourceAssembly: "Draco")]
     public enum DecodeSettings
     {
         /// <summary>

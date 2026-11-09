@@ -13,7 +13,7 @@ using Unity.Scripting.LifecycleManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     [BurstCompile]
     unsafe partial struct GetDracoBonesJob : IJob
@@ -40,8 +40,8 @@ namespace Draco
         public GetDracoBonesJob(
             NativeReference<int> result,
             NativeReference<DracoResources> resources,
-            NativeAttribute* indicesAttribute,
-            NativeAttribute* weightsAttribute,
+            in NativeAttribute indicesAttribute,
+            in NativeAttribute weightsAttribute,
             NativeArray<byte> bonesPerVertex,
             NativeArray<BoneWeight1> boneWeights,
             VertexAttributeFormat indexFormat
@@ -65,10 +65,10 @@ namespace Draco
         NativeReference<DracoResources> m_Resources;
 
         [ReadOnly, NativeDisableUnsafePtrRestriction]
-        NativeAttribute* m_IndicesAttribute;
+        NativeAttribute m_IndicesAttribute;
 
         [ReadOnly, NativeDisableUnsafePtrRestriction]
-        NativeAttribute* m_WeightsAttribute;
+        NativeAttribute m_WeightsAttribute;
 
         [WriteOnly, NativeDisableContainerSafetyRestriction]
         NativeArray<byte> m_BonesPerVertex;
@@ -84,49 +84,47 @@ namespace Draco
             }
             var dracoMesh = m_Resources.Value.mesh;
 
-            NativeData* indicesData = null;
             if (!DracoInstance.GetAttributeData(
                 dracoMesh,
                 m_IndicesAttribute,
-                &indicesData,
+                out var indicesData,
                 false,
-                m_IndicesAttribute->numComponents
+                m_IndicesAttribute.numComponents
                 ))
             {
                 return;
             }
-            var indexSize = DracoInstance.DataTypeSize(indicesData->dataType) * m_IndicesAttribute->numComponents;
+            var indexSize = DracoInstance.DataTypeSize(indicesData.dataType) * m_IndicesAttribute.numComponents;
 
-            NativeData* weightsData = null;
             if (!DracoInstance.GetAttributeData(
                     dracoMesh,
                     m_WeightsAttribute,
-                    &weightsData,
+                    out var weightsData,
                     false,
-                    m_WeightsAttribute->numComponents
+                    m_WeightsAttribute.numComponents
                 ))
             {
-                DracoInstance.ReleaseDracoData(&indicesData);
+                DracoInstance.ReleaseDracoData(ref indicesData);
                 return;
             }
-            var weightSize = DracoInstance.DataTypeSize(weightsData->dataType) * m_WeightsAttribute->numComponents;
+            var weightSize = DracoInstance.DataTypeSize(weightsData.dataType) * m_WeightsAttribute.numComponents;
 
             for (var v = 0; v < dracoMesh->numVertices; v++)
             {
-                m_BonesPerVertex[v] = (byte)m_IndicesAttribute->numComponents;
-                var indicesPtr = (IntPtr)(((byte*)indicesData->data) + (indexSize * v));
-                var weightsPtr = (float*)(((byte*)weightsData->data) + (weightSize * v));
-                for (var b = 0; b < m_IndicesAttribute->numComponents; b++)
+                m_BonesPerVertex[v] = (byte)m_IndicesAttribute.numComponents;
+                var indicesPtr = (IntPtr)(((byte*)indicesData.data) + (indexSize * v));
+                var weightsPtr = (float*)(((byte*)weightsData.data) + (weightSize * v));
+                for (var b = 0; b < m_IndicesAttribute.numComponents; b++)
                 {
-                    m_BoneWeights[v * m_IndicesAttribute->numComponents + b] = new BoneWeight1
+                    m_BoneWeights[v * m_IndicesAttribute.numComponents + b] = new BoneWeight1
                     {
                         boneIndex = m_IndexValueConverter.Invoke(indicesPtr, b),
                         weight = *(weightsPtr + b)
                     };
                 }
             }
-            DracoInstance.ReleaseDracoData(&indicesData);
-            DracoInstance.ReleaseDracoData(&weightsData);
+            DracoInstance.ReleaseDracoData(ref indicesData);
+            DracoInstance.ReleaseDracoData(ref weightsData);
         }
 
         /// <summary>

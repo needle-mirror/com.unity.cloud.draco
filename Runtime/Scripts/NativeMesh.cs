@@ -4,15 +4,19 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     [StructLayout(LayoutKind.Sequential)]
-    struct NativeMesh
+    unsafe struct NativeMesh
     {
         public int numFaces;
         public int numVertices;
         // ReSharper disable once MemberCanBePrivate.Local
         public int numAttributes;
         public bool isPointCloud;
+        /// <summary>
+        /// Pointer to the decoded <see cref="Codec.DecodedGeometry"/> that backs this mesh.
+        /// </summary>
+        public void* privateMesh;
     }
 }

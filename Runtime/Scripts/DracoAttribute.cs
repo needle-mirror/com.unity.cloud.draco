@@ -8,7 +8,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     sealed class DracoAttribute : AttributeBase
     {
@@ -89,12 +89,8 @@ namespace Draco
             );
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                DracoAttributeInstance.Dispose();
-            }
-        }
+        // Nothing to release: the attribute descriptor is a plain value and the attribute data it
+        // points at is owned by the decoded mesh.
+        protected override void Dispose(bool disposing) { }
     }
 }

@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Draco.Sample.SceneEncodeDecode.Editor
+namespace Unity.Cloud.Draco.Sample.SceneEncodeDecode.Editor
 {
     static class ToolsMenu
     {

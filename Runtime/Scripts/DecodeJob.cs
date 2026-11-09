@@ -1,16 +1,14 @@
 // SPDX-FileCopyrightText: 2025 Unity Technologies and the Draco for Unity authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     [BurstCompile]
-    unsafe struct DecodeJob : IJob
+    struct DecodeJob : IJob
     {
         public NativeArray<byte>.ReadOnly encodedData;
 
@@ -19,20 +17,19 @@ namespace Draco
         [WriteOnly]
         public NativeReference<DracoResources> resources;
 
+        [WriteOnly]
+        public NativeReference<DracoDecoderHandle> decoderHandle;
+
         public void Execute()
         {
-            NativeMesh* dracoMeshPtr;
-            void* decoder;
-            void* buffer;
-            var decodeResult = DracoInstance.DecodeDracoMeshStep1(
-                (byte*)encodedData.GetUnsafeReadOnlyPtr(), encodedData.Length,
-                &dracoMeshPtr, &decoder, &buffer);
+            var decodeResult = DracoInstance.DecodeDracoMeshStep1(encodedData, out var decoded, out var decoder);
             result.Value = decodeResult;
             if (decodeResult < 0)
             {
                 return;
             }
-            resources.Value = new DracoResources(dracoMeshPtr, decoder, buffer);
+            resources.Value = decoded;
+            decoderHandle.Value = decoder;
             result.Value = 0;
         }
     }

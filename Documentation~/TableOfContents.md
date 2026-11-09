@@ -16,4 +16,3 @@
   * [Scene Encode/Decode](sample-scene-encode-decode.md)
 * [Go further](do-more.md)
 * [Known limitations](known-limitations.md)
-* [Troubleshooting](troubleshooting.md)

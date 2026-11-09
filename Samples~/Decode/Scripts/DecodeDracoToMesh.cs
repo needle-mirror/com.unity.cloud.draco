@@ -3,7 +3,7 @@
 
 using UnityEngine;
 
-namespace Draco.Sample.Decode
+namespace Unity.Cloud.Draco.Sample.Decode
 {
 
     [RequireComponent(typeof(MeshFilter))]

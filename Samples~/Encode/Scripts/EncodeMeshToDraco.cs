@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.IO;
-using Draco.Encode;
+using Unity.Cloud.Draco.Encode;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Draco.Sample.Encode
+namespace Unity.Cloud.Draco.Sample.Encode
 {
 
     [RequireComponent(typeof(MeshFilter))]

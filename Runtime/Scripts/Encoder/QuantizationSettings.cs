@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace Draco.Encode
+namespace Unity.Cloud.Draco.Encode
 {
     /// <summary>
     /// Quantization settings.
     /// </summary>
+    [MovedFrom(true, sourceNamespace: "Draco.Encode", sourceAssembly: "Draco.Encode")]
     public readonly struct QuantizationSettings
     {
         // ReSharper disable MemberCanBePrivate.Global

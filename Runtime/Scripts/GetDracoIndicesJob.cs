@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     [BurstCompile]
     unsafe struct GetDracoIndicesJob : IJob

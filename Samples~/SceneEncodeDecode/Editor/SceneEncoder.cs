@@ -5,13 +5,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Draco.Encode;
+using Unity.Cloud.Draco.Encode;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Assertions;
 
-namespace Draco.Sample.SceneEncodeDecode.Editor
+namespace Unity.Cloud.Draco.Sample.SceneEncodeDecode.Editor
 {
     static class SceneEncoder
     {

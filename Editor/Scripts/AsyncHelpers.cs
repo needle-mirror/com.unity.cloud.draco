@@ -1,46 +1,15 @@
 // Source: https://social.msdn.microsoft.com/Forums/en-US/163ef755-ff7b-4ea5-b226-bbe8ef5f4796/is-there-a-pattern-for-calling-an-async-method-synchronously?forum=async
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
-namespace Draco.Editor
+namespace Unity.Cloud.Draco.Editor
 {
 
     static class AsyncHelpers
     {
-        /// <summary>
-        /// Executes an async Task&lt;T&gt; method which has a void return value synchronously
-        /// </summary>
-        /// <param name="task">Task&lt;T&gt; method to execute</param>
-        public static void RunSync(Func<Task> task)
-        {
-            var oldContext = SynchronizationContext.Current;
-            var sync = new ExclusiveSynchronizationContext();
-            SynchronizationContext.SetSynchronizationContext(sync);
-            // ReSharper disable once AsyncVoidLambda
-            sync.Post(async _ =>
-            {
-                try
-                {
-                    await task();
-                }
-                catch (Exception e)
-                {
-                    sync.InnerException = e;
-                    throw;
-                }
-                finally
-                {
-                    sync.EndMessageLoop();
-                }
-            }, null);
-            sync.BeginMessageLoop();
-
-            SynchronizationContext.SetSynchronizationContext(oldContext);
-        }
-
         /// <summary>
         /// Executes an async Task&lt;T&gt; method which has a T return type synchronously
         /// </summary>

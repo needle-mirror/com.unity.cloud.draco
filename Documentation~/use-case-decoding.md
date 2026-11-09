@@ -4,7 +4,7 @@
 
 ## Before you start
 
-Make sure you have *Draco for Unity* [installed](installation.md) and referenced the `Draco` assembly.
+Make sure you have *Draco for Unity* [installed](installation.md) and referenced the `Unity.Cloud.Draco` assembly.
 
 ## Prepare a Draco file
 
@@ -17,13 +17,13 @@ If you copy a Draco (`.drc`) into the Assets folder directly, it'll get decoded 
 
 ## Decoding
 
-Decoding can be achieved by calling one of the [DecodeMesh](xref:Draco.DracoDecoder.DecodeMesh*) overloads.
+Decoding can be achieved by calling one of the [DecodeMesh](xref:Unity.Cloud.Draco.DracoDecoder.DecodeMesh*) overloads.
 
-They differ in input data type (`byte[]`/`NativeSlice<byte>`) and [simple vs. advanced Mesh API](xref:UnityEngine.Mesh) and optionally take [`decodeSettings`](xref:Draco.DecodeSettings) and `attributeIdMap` parameters.
+They differ in input data type (`byte[]`/`NativeArray<byte>.ReadOnly`, single or a list of meshes) and [simple vs. advanced Mesh API](xref:UnityEngine.Mesh) and optionally take [`decodeSettings`](xref:Unity.Cloud.Draco.DecodeSettings) and `attributeIdMap` parameters.
 
 ### Attribute assignment via Draco identifier
 
-[DecodeMesh](xref:Draco.DracoDecoder.DecodeMesh*)'s `attributeIdMap` parameter allows assignment of Draco vertex attributes to Unity Mesh vertex attributes.
+[DecodeMesh](xref:Unity.Cloud.Draco.DracoDecoder.DecodeMesh*)'s `attributeIdMap` parameter allows assignment of Draco vertex attributes to Unity Mesh vertex attributes.
 
 In Draco data vertex attributes have a unique identifier (integer value) and one of these types:
 
@@ -63,11 +63,11 @@ Here's a full example
 
 ### Shading parameters
 
-Some shaders might require a mesh to have correct normals (or normals plus tangents). For example, the *Unlit* (a flat-shaded color) shader doesn't require neither while another one with a normal map requires both. A Draco mesh might not contain normals or tangents and in those cases normals (or normals and tangents) need to be calculated. The [DecodeMesh](xref:Draco.DracoDecoder.DecodeMesh*)'s [`decodeSettings`](xref:Draco.DecodeSettings) parameter's [`RequireNormals`](xref:Draco.DecodeSettings.RequireNormals), [`RequireTangents`](xref:Draco.DecodeSettings.RequireTangents) and [`RequireNormalsAndTangents`](xref:Draco.DecodeSettings.RequireNormalsAndTangents) fields allow you to pass on that aspect of the anticipated mesh application.
+Some shaders might require a mesh to have correct normals (or normals plus tangents). For example, the *Unlit* (a flat-shaded color) shader doesn't require neither while another one with a normal map requires both. A Draco mesh might not contain normals or tangents and in those cases normals (or normals and tangents) need to be calculated. The [DecodeMesh](xref:Unity.Cloud.Draco.DracoDecoder.DecodeMesh*)'s [`decodeSettings`](xref:Unity.Cloud.Draco.DecodeSettings) parameter's [`RequireNormals`](xref:Unity.Cloud.Draco.DecodeSettings.RequireNormals), [`RequireTangents`](xref:Unity.Cloud.Draco.DecodeSettings.RequireTangents) and [`RequireNormalsAndTangents`](xref:Unity.Cloud.Draco.DecodeSettings.RequireNormalsAndTangents) fields allow you to pass on that aspect of the anticipated mesh application.
 
-[DecodeMesh](xref:Draco.DracoDecoder.DecodeMesh*) overloads the return a ready-to-use [Mesh](xref:UnityEngine.Mesh) will perform the normals/tangents calculations internally.
+[DecodeMesh](xref:Unity.Cloud.Draco.DracoDecoder.DecodeMesh*) overloads the return a ready-to-use [Mesh](xref:UnityEngine.Mesh) will perform the normals/tangents calculations internally.
 
-On [DecodeMesh](xref:Draco.DracoDecoder.DecodeMesh*) overloads that work on [MeshData](xref:UnityEngine.Mesh.MeshData) you'll have to perform those calculations yourself. It'll only ensure that the vertex buffer layout allocates a normal/tangent attribute and the returned [DecodeResult's](xref:Draco.DecodeResult) [calculateNormals field](xref:Draco.DecodeResult.calculateNormals) indicates whether normals need to be calculated. This can be achieved by calling [RecalculateNormals](xref:UnityEngine.Mesh.RecalculateNormals()) after the data was applied (via [`ApplyAndDisposeWritableMeshData`](xref:UnityEngine.Mesh.ApplyAndDisposeWritableMeshData(UnityEngine.Mesh/MeshDataArray,System.Collections.Generic.List`1<UnityEngine.Mesh>,UnityEngine.Rendering.MeshUpdateFlags))). Tangents decoding is [not supported](known-limitations.md#draco-bit-stream-version) so they always need to be calculated.
+On [DecodeMesh](xref:Unity.Cloud.Draco.DracoDecoder.DecodeMesh*) overloads that work on [MeshData](xref:UnityEngine.Mesh.MeshData) you'll have to perform those calculations yourself. It'll only ensure that the vertex buffer layout allocates a normal/tangent attribute and the returned [DecodeResult's](xref:Unity.Cloud.Draco.DecodeResult) [calculateNormals field](xref:Unity.Cloud.Draco.DecodeResult.calculateNormals) indicates whether normals need to be calculated. This can be achieved by calling [RecalculateNormals](xref:UnityEngine.Mesh.RecalculateNormals()) after the data was applied (via [`ApplyAndDisposeWritableMeshData`](xref:UnityEngine.Mesh.ApplyAndDisposeWritableMeshData(UnityEngine.Mesh/MeshDataArray,System.Collections.Generic.List`1<UnityEngine.Mesh>,UnityEngine.Rendering.MeshUpdateFlags))). Tangents decoding is [not supported](known-limitations.md#draco-bit-stream-version) so they always need to be calculated.
 
 ### Blend shapes parameters
 

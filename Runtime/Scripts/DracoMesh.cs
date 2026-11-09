@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     class DracoMesh
     {
@@ -53,7 +53,7 @@ namespace Draco
             IReadOnlyList<NativeArray<byte>.ReadOnly> encodedData,
             IReadOnlyList<Dictionary<VertexAttribute, int>> attributeIdMap
 #if UNITY_EDITOR
-            ,bool sync = false
+            , bool sync = false
 #endif
             )
         {
@@ -95,7 +95,7 @@ namespace Draco
                     dracoInstances[subMeshIndex],
                     indexOffset
 #if UNITY_EDITOR
-                    ,sync
+                    , sync
 #endif
                 );
                 indexOffset += m_SubMeshes[subMeshIndex].indicesCount;
@@ -361,13 +361,14 @@ namespace Draco
             DracoInstance dracoInstance,
             int indexOffset
 #if UNITY_EDITOR
-            ,bool sync = false
+            , bool sync = false
 #endif
             )
         {
             var decodeVerticesJobHandle = dracoInstance.DecodeVertices();
 #if UNITY_EDITOR
-            if (sync) {
+            if (sync)
+            {
                 decodeVerticesJobHandle.Complete();
             }
 #endif
@@ -409,7 +410,8 @@ namespace Draco
             }
 
 #if UNITY_EDITOR
-            if (sync) {
+            if (sync)
+            {
                 indicesJob.Complete();
             }
 #endif
@@ -437,7 +439,8 @@ namespace Draco
                     decodeVerticesJobHandle
                     );
 #if UNITY_EDITOR
-                if (sync) {
+                if (sync)
+                {
                     jobHandles[jobIndex].Complete();
                 }
 #endif
@@ -463,7 +466,8 @@ namespace Draco
             var releaseDracoMeshJobHandle = dracoInstance.Release(jobHandle);
 
 #if UNITY_EDITOR
-            if (sync) {
+            if (sync)
+            {
                 releaseDracoMeshJobHandle.Complete();
             }
 #endif

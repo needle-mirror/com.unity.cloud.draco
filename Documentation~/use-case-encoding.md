@@ -4,11 +4,11 @@
 
 ## Before you start
 
-Make sure you have *Draco for Unity* [installed](installation.md) and referenced the `Draco.Encode` assembly.
+Make sure you have *Draco for Unity* [installed](installation.md) and referenced the `Unity.Cloud.Draco.Encode` assembly.
 
 ## Encode
 
-Encoding can be achieved by calling one of the [EncodeMesh](xref:Draco.Encode.DracoEncoder.EncodeMesh*) overloads. Since sub-meshes are [not supported](known-limitations.md#sub-mesh) they'll get split into separate Draco meshes. The result is an array of [EncodeResults](xref:Draco.Encode.EncodeResult), one for each sub-mesh.
+Encoding can be achieved by calling one of the [EncodeMesh](xref:Unity.Cloud.Draco.Encode.DracoEncoder.EncodeMesh*) overloads. Since sub-meshes are [not supported](known-limitations.md#sub-mesh) they'll get split into separate Draco meshes. The result is an array of [EncodeResults](xref:Unity.Cloud.Draco.Encode.EncodeResult), one for each sub-mesh.
 
 Here's an example that encodes a [Mesh](xref:UnityEngine.Mesh) and saves the results into files.
 
@@ -16,11 +16,11 @@ Here's an example that encodes a [Mesh](xref:UnityEngine.Mesh) and saves the res
 
 ### Optimize and tweak
 
-[EncodeMesh](xref:Draco.Encode.DracoEncoder.EncodeMesh*)'s optional [`quantization`](xref:Draco.Encode.QuantizationSettings) and [speed](xref:Draco.Encode.SpeedSettings) parameters offers many ways to customize the encoding process.
+[EncodeMesh](xref:Unity.Cloud.Draco.Encode.DracoEncoder.EncodeMesh*)'s optional [`quantization`](xref:Unity.Cloud.Draco.Encode.QuantizationSettings) and [speed](xref:Unity.Cloud.Draco.Encode.SpeedSettings) parameters offers many ways to customize the encoding process.
 
 #### Speed parameters
 
-The settings [`encodingSpeed`](xref:Draco.Encode.SpeedSettings.encodingSpeed) and [`decodingSpeed`](xref:Draco.Encode.SpeedSettings.decodingSpeed) allow you to tweak the tradeoff between resulting data size in bytes and encoding/decoding speed by turning on/off different compression features. In general, the lowest setting, 0, will have the most compression but worst speed. 10 will have the least compression, but best speed.
+The settings [`encodingSpeed`](xref:Unity.Cloud.Draco.Encode.SpeedSettings.encodingSpeed) and [`decodingSpeed`](xref:Unity.Cloud.Draco.Encode.SpeedSettings.decodingSpeed) allow you to tweak the tradeoff between resulting data size in bytes and encoding/decoding speed by turning on/off different compression features. In general, the lowest setting, 0, will have the most compression but worst speed. 10 will have the least compression, but best speed.
 
 #### Quantization settings
 
@@ -30,29 +30,29 @@ In general, the more you quantize your attributes the better compression rate yo
 
 Quantization is specified per attribute type:
 
-- Position ([`positionQuantization`](xref:Draco.Encode.QuantizationSettings.positionQuantization) setting)
-- Normal ([`normalQuantization`](xref:Draco.Encode.QuantizationSettings.normalQuantization) setting)
-- Texture Coordinate ([`texCoordQuantization`](xref:Draco.Encode.QuantizationSettings.texCoordQuantization) setting)
-- Color ([`colorQuantization`](xref:Draco.Encode.QuantizationSettings.colorQuantization) setting)
-- Generic ([`genericQuantization`](xref:Draco.Encode.QuantizationSettings.genericQuantization) setting)
+- Position ([`positionQuantization`](xref:Unity.Cloud.Draco.Encode.QuantizationSettings.positionQuantization) setting)
+- Normal ([`normalQuantization`](xref:Unity.Cloud.Draco.Encode.QuantizationSettings.normalQuantization) setting)
+- Texture Coordinate ([`texCoordQuantization`](xref:Unity.Cloud.Draco.Encode.QuantizationSettings.texCoordQuantization) setting)
+- Color ([`colorQuantization`](xref:Unity.Cloud.Draco.Encode.QuantizationSettings.colorQuantization) setting)
+- Generic ([`genericQuantization`](xref:Unity.Cloud.Draco.Encode.QuantizationSettings.genericQuantization) setting)
 
 ##### Position Quantization
 
-Alternatively the ideal position quantization can be calculated from the mesh's size, its size/scale in the world and the desired precision. Have a look at [QuantizationSettings.FromWorldSize](xref:Draco.Encode.QuantizationSettings.FromWorldSize*) for details.
+Alternatively the ideal position quantization can be calculated from the mesh's size, its size/scale in the world and the desired precision. Have a look at [QuantizationSettings.FromWorldSize](xref:Unity.Cloud.Draco.Encode.QuantizationSettings.FromWorldSize*) for details.
 
 #### Encode options
 
-[EncodeOptions](xref:Draco.Encode.EncodeOptions) flags alter how attributes are encoded. For example, [`PadSkinAttributesToFour`](xref:Draco.Encode.EncodeOptions.PadSkinAttributesToFour) encodes bone weights and indices with four components (zero-padded), as glTF requires for `JOINTS_0`/`WEIGHTS_0`, even if the source mesh has fewer bone influences per vertex.
+[EncodeOptions](xref:Unity.Cloud.Draco.Encode.EncodeOptions) flags alter how attributes are encoded. For example, [`PadSkinAttributesToFour`](xref:Unity.Cloud.Draco.Encode.EncodeOptions.PadSkinAttributesToFour) encodes bone weights and indices with four components (zero-padded), as glTF requires for `JOINTS_0`/`WEIGHTS_0`, even if the source mesh has fewer bone influences per vertex.
 
 ### Encode using the advanced Mesh API
 
-If you want to encode multiple Meshes you'll get the best performance by using the advanced Mesh API [EncodeMesh](xref:Draco.Encode.DracoEncoder.EncodeMesh*) overloads that take a [Mesh](xref:UnityEngine.Mesh)/[MeshData](xref:UnityEngine.Mesh.MeshData) pair as first parameters.
+If you want to encode multiple Meshes you'll get the best performance by using the advanced Mesh API [EncodeMesh](xref:Unity.Cloud.Draco.Encode.DracoEncoder.EncodeMesh*) overloads that take a [Mesh](xref:UnityEngine.Mesh)/[MeshData](xref:UnityEngine.Mesh.MeshData) pair as first parameters.
 
 The steps are:
 
 1. Call [AcquireReadOnlyMeshData](xref:UnityEngine.Mesh.AcquireReadOnlyMeshData(UnityEngine.Mesh[])) with a collection of meshes you want to encode.
-2. Iterate over the meshes and invoke [EncodeMesh](xref:Draco.Encode.DracoEncoder.EncodeMesh(UnityEngine.Mesh,UnityEngine.Mesh.MeshData,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)) on each of them.
-3. Await each encoding job, handle the results (e.g. store them to a file or upload them to a server) and [dispose the EncodeResult](xref:Draco.Encode.EncodeResult.Dispose).
+2. Iterate over the meshes and invoke [EncodeMesh](xref:Unity.Cloud.Draco.Encode.DracoEncoder.EncodeMesh(UnityEngine.Mesh,UnityEngine.Mesh.MeshData,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)) on each of them.
+3. Await each encoding job, handle the results (e.g. store them to a file or upload them to a server) and [dispose the EncodeResult](xref:Unity.Cloud.Draco.Encode.EncodeResult.Dispose).
 4. Dispose the [MeshDataArray](xref:UnityEngine.Mesh.MeshDataArray) that [AcquireReadOnlyMeshData](xref:UnityEngine.Mesh.AcquireReadOnlyMeshData(UnityEngine.Mesh[])) returned.
 
 ## Encode Sample

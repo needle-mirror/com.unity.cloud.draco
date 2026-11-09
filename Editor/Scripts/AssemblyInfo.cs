@@ -3,4 +3,4 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Draco.Editor.Tests")]
+[assembly: InternalsVisibleTo("Unity.Cloud.Draco.Editor.Tests")]

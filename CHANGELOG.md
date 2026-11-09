@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0-pre.1] - 2026-11-09
+
+### Added
+- (Test) Performance tests.
+
+### Changed
+- (Breaking) Moved the `Draco` namespace (including all sub-namespaces) to `Unity.Cloud.Draco`. The API Updater converts existing code automatically.
+- (Breaking) Renamed assembly definitions to be prefixed with `Unity.Cloud.` (e.g. `Draco` to `Unity.Cloud.Draco` and `Draco.Encode` to `Unity.Cloud.Draco.Encode`). Assembly definitions referencing them by name need to be updated.
+
+### Fixed
+- Removed unused assembly reference `DracoEncoder` in `Draco.Editor.asmdef`.
+- Decoding a null or empty `byte[]` threw an exception instead of failing gracefully.
+
+### Removed
+- Native plug-in binaries for all platforms. Encoding and decoding are implemented in C# now.
+- Build pre-processor that selected the native library variant per platform and Unity version.
+- Troubleshooting documentation about loading the native library on Windows and the Visual C++ runtime dependency.
+- `UnityVersion`, which was only used to pick a native library variant.
+- List of supported platforms in the documentation. Every platform Unity supports is expected to work now.
+- Decoding paths for bitstream versions older than 2.2 (meshes) and 2.3 (point clouds), which the native plug-in did not support either.
+- Obsolete `DracoMeshLoader`. Use `DracoDecoder.DecodeMesh` instead.
+- Obsolete `DracoDecoder.DecodeMesh` overloads accepting `NativeSlice<byte>`. Use the overloads accepting `NativeArray<byte>.ReadOnly` instead.
+- Obsolete `DracoEncoder.EncodeMesh` overloads with individual speed and quantization parameters. Use the overloads accepting `QuantizationSettings` and `SpeedSettings` instead.
+- Automatic removal of obsolete WebGL sub-packages (`com.unity.cloud.draco.webgl-*`). They don't conflict with the C# implementation anymore.
+
+### Security
+- Decoding rejects texture coordinate predictions declaring more orientations than attribute entries, which let a few corrupted bytes trigger allocations of up to 2 GB.
+- Decoding rejects malformed streams that upstream Draco hardened against: out of range face indices in sequentially encoded meshes, negative point counts in point clouds and parallelogram/geometric normal predictions whose entries exceed the attribute size.
+
 ## [5.6.0] - 2026-11-02
 
 ### Added

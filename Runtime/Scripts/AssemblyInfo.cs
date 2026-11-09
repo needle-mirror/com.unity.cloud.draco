@@ -4,4 +4,6 @@
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-[assembly: InternalsVisibleTo("Draco.Tests")]
+[assembly: InternalsVisibleTo("Unity.Cloud.Draco.Tests")]
+// The encoder assembly drives the codec directly, just like the decoder does.
+[assembly: InternalsVisibleTo("Unity.Cloud.Draco.Encode")]

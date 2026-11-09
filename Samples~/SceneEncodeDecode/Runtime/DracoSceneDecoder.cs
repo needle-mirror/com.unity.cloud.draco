@@ -5,7 +5,7 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Draco.Sample.SceneEncodeDecode
+namespace Unity.Cloud.Draco.Sample.SceneEncodeDecode
 {
 
     /// <summary>

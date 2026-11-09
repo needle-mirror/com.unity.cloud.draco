@@ -7,7 +7,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     /// <summary>
     /// Wraps a managed byte[] in a NativeArray&lt;byte&gt;without copying memory.
@@ -27,7 +27,8 @@ namespace Draco
         /// <param name="original">The original byte[] to convert into a NativeArray&lt;byte&gt;</param>
         public unsafe ManagedNativeArray(byte[] original)
         {
-            if (original != null)
+            // An empty array has no first element to pin.
+            if (original != null && original.Length > 0)
             {
                 m_BufferHandle = GCHandle.Alloc(original, GCHandleType.Pinned);
                 fixed (void* bufferAddress = &original[0])
@@ -43,7 +44,8 @@ namespace Draco
             }
             else
             {
-                m_NativeArray = new NativeArray<byte>();
+                // A valid, empty array lets consumers like jobs fail gracefully.
+                m_NativeArray = new NativeArray<byte>(0, Allocator.Persistent);
             }
         }
 
@@ -64,6 +66,10 @@ namespace Draco
                 AtomicSafetyHandle.Release(m_SafetyHandle);
 #endif
                 m_BufferHandle.Free();
+            }
+            else
+            {
+                m_NativeArray.Dispose();
             }
         }
     }

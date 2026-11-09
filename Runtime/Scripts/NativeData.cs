@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     [StructLayout(LayoutKind.Sequential)]
     struct NativeData

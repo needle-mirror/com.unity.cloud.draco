@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     /// <summary>
     /// GeometryAttribute::Type as defined in
     /// <a href="https://github.com/google/draco/blob/9f856abaafb4b39f1f013763ff061522e0261c6f/src/draco/attributes/geometry_attribute.h#L46">geometry_attribute.h</a>
     /// </summary>
+    [MovedFrom(true, sourceNamespace: "Draco", sourceAssembly: "Draco")]
     public enum AttributeType
     {
         ///<summary>GeometryAttribute::Type::INVALID</summary>

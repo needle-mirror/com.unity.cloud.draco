@@ -1,0 +1,21 @@
+{
+    "name": "Unity.Cloud.Draco.Sample.SceneEncodeDecode.Editor",
+    "rootNamespace": "Unity.Cloud.Draco.Editor",
+    "references": [
+        "Unity.Cloud.Draco",
+        "Unity.Cloud.Draco.Encode",
+        "Unity.Cloud.Draco.Editor",
+        "Unity.Cloud.Draco.Sample.SceneEncodeDecode"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

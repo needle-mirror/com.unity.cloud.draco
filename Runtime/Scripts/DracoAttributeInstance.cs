@@ -1,30 +1,25 @@
 // SPDX-FileCopyrightText: 2025 Unity Technologies and the Draco for Unity authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System;
 using UnityEngine.Rendering;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
-    unsafe struct DracoAttributeInstance : IDisposable
+    /// <summary>
+    /// A decoded attribute descriptor. Holds no ownership: the attribute values live in the
+    /// decoded geometry, which is released with the mesh.
+    /// </summary>
+    unsafe struct DracoAttributeInstance
     {
-        public NativeAttribute* attribute { get; private set; }
+        /// <summary>The attribute descriptor. Only meaningful when <see cref="IsValid"/> is true.</summary>
+        public NativeAttribute Value { get; private set; }
 
-        public readonly NativeAttribute Value => *attribute;
+        /// <summary>True when this instance refers to an actual attribute.</summary>
+        public readonly bool IsValid => Value.privateAttribute != null;
 
-        public DracoAttributeInstance(NativeAttribute* attribute)
+        public DracoAttributeInstance(in NativeAttribute attribute)
         {
-            this.attribute = attribute;
-        }
-
-        public void Dispose()
-        {
-            if (attribute != null)
-            {
-                var tmp = attribute;
-                DracoInstance.ReleaseDracoAttribute(&tmp);
-                attribute = null;
-            }
+            Value = attribute;
         }
 
         public VertexAttributeFormat? GetVertexAttributeFormat(bool normalized = false)

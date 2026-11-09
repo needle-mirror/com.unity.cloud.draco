@@ -4,10 +4,10 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     [StructLayout(LayoutKind.Sequential)]
-    struct NativeAttribute
+    unsafe struct NativeAttribute
     {
         // ReSharper disable MemberCanBePrivate.Local
         public AttributeType attributeType;
@@ -15,5 +15,9 @@ namespace Draco
         public int numComponents;
         public int uniqueId;
         // ReSharper restore MemberCanBePrivate.Local
+        /// <summary>
+        /// Pointer to the decoded <see cref="Codec.PointAttribute"/> that backs this attribute.
+        /// </summary>
+        public void* privateAttribute;
     }
 }

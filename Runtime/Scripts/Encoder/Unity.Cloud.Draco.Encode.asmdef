@@ -1,0 +1,18 @@
+{
+    "name": "Unity.Cloud.Draco.Encode",
+    "rootNamespace": "Unity.Cloud.Draco.Encode",
+    "references": [
+        "Unity.Cloud.Draco",
+        "Unity.Mathematics",
+        "Unity.Burst"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

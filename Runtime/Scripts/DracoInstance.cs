@@ -13,23 +13,13 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
-[assembly: InternalsVisibleTo("Draco.Encode")]
+[assembly: InternalsVisibleTo("Unity.Cloud.Draco.Encode")]
 
-namespace Draco
+namespace Unity.Cloud.Draco
 {
     [BurstCompile]
     class DracoInstance
     {
-
-#if !UNITY_EDITOR && (UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || UNITY_VISIONOS)
-        internal const string k_DracoUnityLib = "__Internal";
-#elif UNITY_ANDROID || UNITY_STANDALONE || UNITY_WSA || UNITY_EDITOR || PLATFORM_LUMIN || PLATFORM_EMBEDDED_LINUX
-        internal const string k_DracoUnityLib = "draco_unity";
-#else
-        // Unsupported platform
-        internal const string k_DracoUnityLib = "UnsupportedPlatform";
-#endif
-
         public unsafe int numVertices => m_Resources.Value.mesh->numVertices;
         public unsafe bool isPointCloud => m_Resources.Value.mesh->isPointCloud;
         public unsafe int numFaces => m_Resources.Value.mesh->numFaces;
@@ -37,31 +27,39 @@ namespace Draco
         NativeReference<int> m_DecodeResult;
         NativeReference<DracoResources> m_Resources;
 
-        unsafe DracoInstance(NativeReference<DracoResources> resources)
+        // Only alive between the two decode steps; disposed once DecodeVertices completed.
+        NativeReference<DracoDecoderHandle> m_DecoderHandle;
+
+        unsafe DracoInstance(
+            NativeReference<DracoResources> resources,
+            NativeReference<DracoDecoderHandle> decoderHandle)
         {
             Assert.AreNotEqual(IntPtr.Zero, (IntPtr)resources.Value.mesh);
-            Assert.AreNotEqual(IntPtr.Zero, (IntPtr)resources.Value.decoder);
-            Assert.AreNotEqual(IntPtr.Zero, (IntPtr)resources.Value.buffer);
+            Assert.AreNotEqual(IntPtr.Zero, (IntPtr)decoderHandle.Value.decoder);
             m_Resources = resources;
+            m_DecoderHandle = decoderHandle;
         }
 
         public static async Task<DracoInstance> Init(NativeArray<byte>.ReadOnly encodedData
 #if UNITY_EDITOR
-            ,bool sync = false
+            , bool sync = false
 #endif
         )
         {
             using var result = new NativeReference<int>(Allocator.Persistent);
             var resources = new NativeReference<DracoResources>(Allocator.Persistent);
+            var decoderHandle = new NativeReference<DracoDecoderHandle>(Allocator.Persistent);
             var decodeJob = new DecodeJob
             {
                 encodedData = encodedData,
                 result = result,
-                resources = resources
+                resources = resources,
+                decoderHandle = decoderHandle
             };
 
 #if UNITY_EDITOR
-            if (sync) {
+            if (sync)
+            {
                 decodeJob.Run();
             }
             else
@@ -75,10 +73,11 @@ namespace Draco
             if (result.Value != 0)
             {
                 resources.Dispose();
+                decoderHandle.Dispose();
                 return null;
             }
 
-            return new DracoInstance(resources);
+            return new DracoInstance(resources, decoderHandle);
         }
 
         public JobHandle DecodeVertices()
@@ -87,9 +86,15 @@ namespace Draco
             var decodeVerticesJob = new DecodeVerticesJob
             {
                 result = m_DecodeResult,
-                resources = m_Resources
+                resources = m_Resources,
+                decoderHandle = m_DecoderHandle
             };
-            return decodeVerticesJob.Schedule();
+            var jobHandle = decodeVerticesJob.Schedule();
+            // The decoder state is freed by the job, so the handle must not outlive it. Disposing here means no
+            // later job can be handed a freed pointer, which is what the previous single-struct design allowed.
+            m_DecoderHandle.Dispose(jobHandle);
+            m_DecoderHandle = default;
+            return jobHandle;
         }
 
         public unsafe bool TryGetAttributeByUniqueId(int uniqueId, out DracoAttributeInstance attributeInstance)
@@ -97,8 +102,7 @@ namespace Draco
             attributeInstance = new DracoAttributeInstance();
             if (uniqueId < 0) return false;
 
-            NativeAttribute* attr;
-            if (GetAttributeByUniqueId(m_Resources.Value.mesh, uniqueId, &attr))
+            if (GetAttributeByUniqueId(m_Resources.Value.mesh, uniqueId, out var attr))
             {
                 attributeInstance = new DracoAttributeInstance(attr);
                 return true;
@@ -111,8 +115,7 @@ namespace Draco
         {
             attributeInstance = new DracoAttributeInstance();
 
-            NativeAttribute* attr;
-            if (GetAttributeByType(m_Resources.Value.mesh, type, index, &attr))
+            if (GetAttributeByType(m_Resources.Value.mesh, type, index, out var attr))
             {
                 attributeInstance = new DracoAttributeInstance(attr);
                 return true;
@@ -159,7 +162,7 @@ namespace Draco
                 {
                     result = m_DecodeResult,
                     resources = m_Resources,
-                    attribute = attributeInstance.attribute,
+                    attribute = attributeInstance.Value,
                     stride = stride,
                     flip = flip,
                     componentStride = componentStride,
@@ -174,7 +177,7 @@ namespace Draco
             {
                 result = m_DecodeResult,
                 resources = m_Resources,
-                attribute = attributeInstance.attribute,
+                attribute = attributeInstance.Value,
                 stride = stride,
                 flip = flip,
                 componentStride = componentStride,
@@ -201,7 +204,7 @@ namespace Draco
                 {
                     result = m_DecodeResult,
                     resources = m_Resources,
-                    attribute = attributeInstance.attribute,
+                    attribute = attributeInstance.Value,
                     flip = flip,
                     componentStride = componentStride,
                     mesh = mesh,
@@ -215,7 +218,7 @@ namespace Draco
             {
                 result = m_DecodeResult,
                 resources = m_Resources,
-                attribute = attributeInstance.attribute,
+                attribute = attributeInstance.Value,
                 flip = flip,
                 componentStride = componentStride,
                 mesh = mesh,
@@ -236,8 +239,8 @@ namespace Draco
             return new GetDracoBonesJob(
                 m_DecodeResult,
                 m_Resources,
-                indicesAttributeInstance.attribute,
-                weightsAttributeInstance.attribute,
+                indicesAttributeInstance.Value,
+                weightsAttributeInstance.Value,
                 bonesPerVertex,
                 boneWeights,
                 indexFormat
@@ -259,6 +262,9 @@ namespace Draco
 
         public void DisposeDracoMesh()
         {
+            // Normally already disposed by DecodeVertices; this covers paths that never got that far.
+            if (m_DecoderHandle.IsCreated)
+                m_DecoderHandle.Dispose();
             if (m_DecodeResult.IsCreated)
                 m_DecodeResult.Dispose();
             if (m_Resources.IsCreated)
@@ -369,92 +375,83 @@ namespace Draco
             }
         }
 
-        // The order must be consistent with C++ interface.
-
         /// <summary>
         /// Release data associated with DracoMesh.
         /// </summary>
-        /// <param name="mesh">Draco mesh</param>
-        [DllImport(k_DracoUnityLib)]
-        internal static extern unsafe void ReleaseDracoMesh(
-            NativeMesh** mesh);
-
-        /// <summary>
-        /// Release data associated with DracoAttribute.
-        /// </summary>
-        /// <param name="attr">Draco attribute</param>
-        [DllImport(k_DracoUnityLib)]
-        internal static extern unsafe void
-            ReleaseDracoAttribute(NativeAttribute** attr);
+        /// <param name="resources">Decode resources. Cleared on return.</param>
+        internal static void ReleaseDracoMesh(ref DracoResources resources)
+        {
+            DracoNativeApi.ReleaseDracoMesh(ref resources);
+        }
 
         /// <summary>
         /// Release attribute data.
         /// </summary>
-        /// <param name="data">Draco data</param>
-        [DllImport(k_DracoUnityLib)]
-        internal static extern unsafe void ReleaseDracoData(
-            NativeData** data);
+        /// <param name="data">Draco data. Cleared on return.</param>
+        internal static void ReleaseDracoData(ref NativeData data)
+        {
+            DracoNativeApi.ReleaseDracoData(ref data);
+        }
 
         /// <summary>
         /// Initializes decoding of a compressed Draco mesh.
         /// Has to be continued by calling <see cref="DecodeDracoMeshStep2"/> (if no error occured).
         /// The returned mesh must be released with <see cref="ReleaseDracoMesh"/>.
         /// </summary>
-        /// <param name="buffer">Pointer to compressed Draco input data</param>
-        /// <param name="length">Length of input buffer</param>
-        /// <param name="mesh">Resulting mesh pointer</param>
-        /// <param name="decoder">Resulting decoder instance pointer</param>
-        /// <param name="decoderBuffer">Resulting decoder buffer pointer</param>
+        /// <param name="encodedData">Compressed Draco input data</param>
+        /// <param name="resources">Resulting decode resources</param>
         /// <returns>Draco error code</returns>
-        [DllImport(k_DracoUnityLib)]
-        internal static extern unsafe int DecodeDracoMeshStep1(
-            byte* buffer, int length, NativeMesh** mesh, void** decoder, void** decoderBuffer);
-
+        internal static int DecodeDracoMeshStep1(
+            NativeArray<byte>.ReadOnly encodedData,
+            out DracoResources resources,
+            out DracoDecoderHandle decoderHandle)
+        {
+            return DracoNativeApi.DecodeDracoMeshStep1(encodedData, out resources, out decoderHandle);
+        }
 
         /// <summary>
         /// Decodes compressed DracoMesh.
         /// Comes after calling <see cref="DecodeDracoMeshStep1"/>.
         /// Mesh must be released with <see cref="ReleaseDracoMesh"/>.
         /// </summary>
-        /// <param name="mesh">Draco mesh instance pointer</param>
-        /// <param name="decoder">Draco decoder instance pointer</param>
-        /// <param name="decoderBuffer">Decoder buffer pointer</param>
+        /// <param name="resources">The decoded mesh.</param>
+        /// <param name="decoderHandle">Decoder state. Freed by this call.</param>
         /// <returns>Draco error code</returns>
-        [DllImport(k_DracoUnityLib)]
-        internal static extern unsafe int DecodeDracoMeshStep2(
-            NativeMesh** mesh, void* decoder, void* decoderBuffer);
+        internal static int DecodeDracoMeshStep2(DracoResources resources, DracoDecoderHandle decoderHandle)
+        {
+            return DracoNativeApi.DecodeDracoMeshStep2(resources, decoderHandle);
+        }
 
         /// <summary>
-        /// Returns the DracoAttribute of type at index in mesh. On input, attribute
-        /// must be null. E.g. If the mesh has two texture coordinates then
-        /// GetAttributeByType(mesh, AttributeType.TEX_COORD, 1, &amp;attr); will return
-        /// the second TEX_COORD attribute. The returned attr must be released with
-        /// ReleaseDracoAttribute.
+        /// Returns the DracoAttribute of type at index in mesh. E.g. if the mesh has two texture
+        /// coordinates then GetAttributeByType(mesh, AttributeType.TEX_COORD, 1, out var attr)
+        /// returns the second TEX_COORD attribute. The descriptor is a plain value and owns
+        /// nothing, so it does not have to be released.
         /// </summary>
         /// <param name="mesh">Draco mesh</param>
         /// <param name="type">Attribute type</param>
         /// <param name="index">Per attribute type sub-index</param>
-        /// <param name="attr">Resulting attribute pointer</param>
+        /// <param name="attr">Resulting attribute descriptor</param>
         /// <returns>True if the attribute was retrieved successfully. False otherwise.</returns>
-        [DllImport(k_DracoUnityLib)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        static extern unsafe bool GetAttributeByType(
-            NativeMesh* mesh, AttributeType type, int index, NativeAttribute** attr);
+        static unsafe bool GetAttributeByType(
+            NativeMesh* mesh, AttributeType type, int index, out NativeAttribute attr)
+        {
+            return DracoNativeApi.GetAttributeByType(mesh, type, index, out attr);
+        }
 
         /// <summary>
-        /// Returns the DracoAttribute with unique_id in mesh. On input, attribute
-        /// must be null.The returned attr must be released with
-        /// ReleaseDracoAttribute.
+        /// Returns the DracoAttribute with unique_id in mesh. The descriptor is a plain value and
+        /// owns nothing, so it does not have to be released.
         /// </summary>
         /// <param name="mesh">Draco mesh</param>
         /// <param name="uniqueID">Unique ID</param>
-        /// <param name="attr">Resulting attribute pointer</param>
+        /// <param name="attr">Resulting attribute descriptor</param>
         /// <returns>True if the attribute was retrieved successfully. False otherwise.</returns>
-        [DllImport(k_DracoUnityLib)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        static extern unsafe bool
-            GetAttributeByUniqueId(NativeMesh* mesh, int uniqueID,
-                NativeAttribute** attr);
+        static unsafe bool GetAttributeByUniqueId(
+            NativeMesh* mesh, int uniqueID, out NativeAttribute attr)
+        {
+            return DracoNativeApi.GetAttributeByUniqueId(mesh, uniqueID, out attr);
+        }
 
         /// <summary>
         /// Returns an array of indices as well as the type of data in data_type. On
@@ -467,15 +464,16 @@ namespace Draco
         /// <param name="indicesCount">Number of indices (equals triangle count * 3)</param>
         /// <param name="flip">If true, triangle vertex order is reverted</param>
         /// <returns>True if extraction succeeded, false otherwise</returns>
-        [DllImport(k_DracoUnityLib)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        internal static extern unsafe bool GetMeshIndices(
+        internal static unsafe bool GetMeshIndices(
             NativeMesh* mesh,
             DataType dataType,
             void* indices,
             int indicesCount,
-            [MarshalAs(UnmanagedType.I1)] bool flip
-            );
+            bool flip
+            )
+        {
+            return DracoNativeApi.GetMeshIndices(mesh, dataType, indices, indicesCount, flip);
+        }
 
         /// <summary>
         /// Returns an array of attribute data as well as the type of data in
@@ -488,10 +486,10 @@ namespace Draco
         /// <param name="flip">Determines whether a space conversion should be applied (flips one axis)</param>
         /// <param name="componentStride">Component stride</param>
         /// <returns>True if retrieving data was successful. False otherwise.</returns>
-        [DllImport(k_DracoUnityLib)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        internal static extern unsafe bool GetAttributeData(
-            NativeMesh* mesh, NativeAttribute* attr, NativeData** data, [MarshalAs(UnmanagedType.I1)] bool flip,
-            int componentStride);
+        internal static unsafe bool GetAttributeData(
+            NativeMesh* mesh, in NativeAttribute attr, out NativeData data, bool flip, int componentStride)
+        {
+            return DracoNativeApi.GetAttributeData(mesh, attr, out data, flip, componentStride);
+        }
     }
 }
