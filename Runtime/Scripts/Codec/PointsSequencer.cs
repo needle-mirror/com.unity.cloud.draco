@@ -272,15 +272,15 @@ namespace Unity.Cloud.Draco.Codec
         /// </summary>
         /// <param name="attribute">Attribute to update.</param>
         /// <returns>False on malformed connectivity.</returns>
-        public bool UpdatePointToAttributeIndexMapping(PointAttribute* attribute)
+        public bool UpdatePointToAttributeIndexMapping(ref PointAttribute attribute)
         {
             if (type == SequencerType.Linear)
             {
-                attribute->SetIdentityMapping();
+                attribute.SetIdentityMapping();
                 return true;
             }
 
-            attribute->SetExplicitMapping(NumPoints);
+            attribute.SetExplicitMapping(NumPoints);
             var numFaces = NumFaces;
             var numPoints = NumPoints;
             var faces = Faces;
@@ -302,7 +302,7 @@ namespace Unity.Cloud.Draco.Codec
                         // There cannot be more attribute values than points.
                         return false;
                     }
-                    attribute->SetPointMapEntry(pointId, attEntryId);
+                    attribute.SetPointMapEntry(pointId, attEntryId);
                 }
             }
             return true;

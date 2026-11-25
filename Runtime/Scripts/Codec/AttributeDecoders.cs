@@ -22,8 +22,15 @@ namespace Unity.Cloud.Draco.Codec
 
         [NativeDisableUnsafePtrRestriction]
         DracoDecoderState* m_Decoder;
-        [NativeDisableUnsafePtrRestriction]
-        PointAttribute* m_Attribute;
+        /// <summary>
+        /// The decoded attribute. Resolved on each use and held only as a local <c>ref</c>, because the
+        /// geometry's attribute list may reallocate while later attributes decoders are still appending to it.
+        /// </summary>
+        ref PointAttribute Attribute
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref m_Decoder->geometry->GetAttribute(attributeId);
+        }
         // Owned by value. Each decoder has at most one portable attribute, and the decoder list is sized once to
         // the exact attribute count before any address into it is taken, so this needs neither its own allocation
         // nor an arena. m_HasPortableAttribute replaces the old "pointer is null" test.
@@ -67,19 +74,19 @@ namespace Unity.Cloud.Draco.Codec
         {
             m_Decoder = decoder;
             attributeId = id;
-            m_Attribute = decoder->geometry->GetAttribute(id);
-            if (m_Attribute == null)
+            if (!decoder->geometry->HasAttribute(id))
             {
                 return false;
             }
 
+            ref var attribute = ref Attribute;
             switch (encoderType)
             {
                 case SequentialAttributeEncoderType.Quantization:
                     // Only floating point attributes can be quantized.
-                    return m_Attribute->dataType == DataType.Float32;
+                    return attribute.dataType == DataType.Float32;
                 case SequentialAttributeEncoderType.Normals:
-                    return m_Attribute->numComponents == 3 && m_Attribute->dataType == DataType.Float32;
+                    return attribute.numComponents == 3 && attribute.dataType == DataType.Float32;
                 default:
                     return true;
             }
@@ -97,13 +104,14 @@ namespace Unity.Cloud.Draco.Codec
                 return null;
             }
             // Copy the point to value mapping over to the portable attribute if needed.
-            if (!m_Attribute->identityMapping && m_PortableAttribute.identityMapping)
+            ref var attribute = ref Attribute;
+            if (!attribute.identityMapping && m_PortableAttribute.identityMapping)
             {
-                var mapSize = m_Attribute->IndicesMapSize;
+                var mapSize = attribute.IndicesMapSize;
                 m_PortableAttribute.SetExplicitMapping(mapSize);
                 for (var i = 0; i < mapSize; ++i)
                 {
-                    m_PortableAttribute.SetPointMapEntry(i, m_Attribute->MappedIndex(i));
+                    m_PortableAttribute.SetPointMapEntry(i, attribute.MappedIndex(i));
                 }
             }
             return PortableAttributePtr;
@@ -117,7 +125,8 @@ namespace Unity.Cloud.Draco.Codec
         /// <returns>False on malformed input.</returns>
         public bool DecodePortableAttribute(UnsafeList<int>* pointIds, DecoderBuffer* buffer)
         {
-            if (m_Attribute->numComponents <= 0 || !m_Attribute->Reset(pointIds->Length))
+            ref var attribute = ref Attribute;
+            if (attribute.numComponents <= 0 || !attribute.Reset(pointIds->Length))
             {
                 return false;
             }
@@ -168,8 +177,9 @@ namespace Unity.Cloud.Draco.Codec
             {
                 // Raw attribute values in their original format.
                 var numValues = pointIds->Length;
-                var entrySize = m_Attribute->byteStride;
-                var destination = m_Attribute->buffer.Ptr;
+                ref var attribute = ref Attribute;
+                var entrySize = attribute.byteStride;
+                var destination = attribute.buffer.Ptr;
                 for (var i = 0; i < numValues; ++i)
                 {
                     if (!buffer->Decode(destination + (long)i * entrySize, entrySize))
@@ -275,16 +285,17 @@ namespace Unity.Cloud.Draco.Codec
             // Normals are always quantized into two octahedral components.
             return encoderType == SequentialAttributeEncoderType.Normals
                 ? 2
-                : m_Attribute->numComponents;
+                : Attribute.numComponents;
         }
 
         void PreparePortableAttribute(int numEntries, int numComponents)
         {
+            ref var attribute = ref Attribute;
             m_HasPortableAttribute = true;
             m_PortableAttribute.Init(
-                m_Attribute->attributeType, (byte)numComponents, DataType.Int32, false, numEntries);
+                attribute.attributeType, (byte)numComponents, DataType.Int32, false, numEntries);
             m_PortableAttribute.SetIdentityMapping();
-            m_PortableAttribute.uniqueId = m_Attribute->uniqueId;
+            m_PortableAttribute.uniqueId = attribute.uniqueId;
         }
 
         int* GetPortableAttributeData()
@@ -390,8 +401,9 @@ namespace Unity.Cloud.Draco.Codec
         {
             // The quantization transform only needs the component count, which is the same
             // for the portable and the target attribute.
-            var attribute = m_HasPortableAttribute ? PortableAttributePtr : m_Attribute;
-            var numComponents = attribute->numComponents;
+            var numComponents = m_HasPortableAttribute
+                ? m_PortableAttribute.numComponents
+                : Attribute.numComponents;
 
             var buffer = &m_Decoder->buffer;
             {
@@ -439,12 +451,13 @@ namespace Unity.Cloud.Draco.Codec
 
         bool StoreIntegerValues(uint numValues)
         {
-            var numComponents = m_Attribute->numComponents;
+            ref var attribute = ref Attribute;
+            var numComponents = attribute.numComponents;
             var portableAttributeData = GetPortableAttributeData();
-            var destination = m_Attribute->buffer.Ptr;
+            var destination = attribute.buffer.Ptr;
             var valueId = 0;
 
-            switch (m_Attribute->dataType)
+            switch (attribute.dataType)
             {
                 case DataType.UInt8:
                 case DataType.Int8:
@@ -491,21 +504,22 @@ namespace Unity.Cloud.Draco.Codec
 
         bool DequantizeValues()
         {
-            if (m_Attribute->dataType != DataType.Float32)
+            ref var attribute = ref Attribute;
+            if (attribute.dataType != DataType.Float32)
             {
                 return false;
             }
             var maxQuantizedValue = (int)((1u << m_QuantizationBits) - 1);
-            var numComponents = m_Attribute->numComponents;
+            var numComponents = attribute.numComponents;
             var dequantizer = new Dequantizer();
             if (!dequantizer.Init(m_Range, maxQuantizedValue))
             {
                 return false;
             }
             var sourceData = (int*)m_PortableAttribute.GetAddress(0);
-            var destination = (float*)m_Attribute->buffer.Ptr;
+            var destination = (float*)attribute.buffer.Ptr;
             var minValues = m_MinValues.Ptr;
-            var numValues = m_Attribute->numUniqueEntries;
+            var numValues = attribute.numUniqueEntries;
 
             var quantizedValueId = 0;
             for (var i = 0; i < numValues; ++i)
@@ -521,11 +535,12 @@ namespace Unity.Cloud.Draco.Codec
 
         bool InverseOctahedralTransform()
         {
-            if (m_Attribute->dataType != DataType.Float32)
+            ref var attribute = ref Attribute;
+            if (attribute.dataType != DataType.Float32)
             {
                 return false;
             }
-            if (m_Attribute->numComponents != 3)
+            if (attribute.numComponents != 3)
             {
                 return false;
             }
@@ -534,9 +549,9 @@ namespace Unity.Cloud.Draco.Codec
             {
                 return false;
             }
-            var numPoints = m_Attribute->numUniqueEntries;
+            var numPoints = attribute.numUniqueEntries;
             var sourceData = (int*)m_PortableAttribute.GetAddress(0);
-            var destination = (float*)m_Attribute->buffer.Ptr;
+            var destination = (float*)attribute.buffer.Ptr;
             for (var i = 0; i < numPoints; ++i)
             {
                 var s = sourceData[i * 2];
@@ -796,8 +811,8 @@ namespace Unity.Cloud.Draco.Codec
                 var numAttributes = NumAttributes;
                 for (var i = 0; i < numAttributes; ++i)
                 {
-                    var attribute = m_Decoder->geometry->GetAttribute(GetAttributeId(new LocalAttributeId(i)));
-                    if (!m_Sequencer.UpdatePointToAttributeIndexMapping(attribute))
+                    ref var attribute = ref m_Decoder->geometry->GetAttribute(GetAttributeId(new LocalAttributeId(i)));
+                    if (!m_Sequencer.UpdatePointToAttributeIndexMapping(ref attribute))
                     {
                         return false;
                     }
@@ -868,29 +883,30 @@ namespace Unity.Cloud.Draco.Codec
             var success = true;
             for (var i = 0; i < numAttributes; ++i)
             {
-                var attribute = m_Decoder->geometry->GetAttribute(GetAttributeId(new LocalAttributeId(i)));
+                ref var attribute = ref m_Decoder->geometry->GetAttribute(GetAttributeId(new LocalAttributeId(i)));
                 // All attributes share the point count and use identity mapping.
-                attribute->Reset(numPoints);
-                attribute->SetIdentityMapping();
+                attribute.Reset(numPoints);
+                attribute.SetIdentityMapping();
 
                 PointAttribute* target;
-                switch (attribute->dataType)
+                switch (attribute.dataType)
                 {
                     case DataType.UInt32:
                     case DataType.UInt16:
                     case DataType.UInt8:
-                        // These can be decoded into directly.
-                        target = attribute;
+                        // These can be decoded into directly. Taking the address is safe here: all attributes were
+                        // added before decoding started, and the sink doesn't outlive this method.
+                        target = (PointAttribute*)UnsafeUtility.AddressOf(ref attribute);
                         break;
                     case DataType.Int32:
                     case DataType.Int16:
                     case DataType.Int8:
                         // Signed values are reconstructed from an offset decoded later.
-                        for (var c = 0; c < attribute->numComponents; ++c)
+                        for (var c = 0; c < attribute.numComponents; ++c)
                         {
                             m_MinSignedValues.Add(0);
                         }
-                        target = attribute;
+                        target = (PointAttribute*)UnsafeUtility.AddressOf(ref attribute);
                         break;
                     case DataType.Float32:
                     {
@@ -898,8 +914,8 @@ namespace Unity.Cloud.Draco.Codec
                         // dequantized afterwards.
                         var portable = Unmanaged.New<PointAttribute>();
                         portable->Init(
-                            attribute->attributeType,
-                            attribute->numComponents,
+                            attribute.attributeType,
+                            attribute.numComponents,
                             DataType.UInt32,
                             false,
                             numPoints);
@@ -938,12 +954,12 @@ namespace Unity.Cloud.Draco.Codec
         {
             for (var i = 0; i < NumAttributes; ++i)
             {
-                var attribute = m_Decoder->geometry->GetAttribute(GetAttributeId(new LocalAttributeId(i)));
-                if (attribute->dataType != DataType.Float32)
+                ref var attribute = ref m_Decoder->geometry->GetAttribute(GetAttributeId(new LocalAttributeId(i)));
+                if (attribute.dataType != DataType.Float32)
                 {
                     continue;
                 }
-                var numComponents = (int)attribute->numComponents;
+                var numComponents = (int)attribute.numComponents;
                 var minValues = new UnsafeList<float>(numComponents, Allocator.Persistent);
                 minValues.Resize(numComponents, NativeArrayOptions.UninitializedMemory);
                 if (!buffer->Decode(minValues.Ptr, sizeof(float) * numComponents))
@@ -991,17 +1007,17 @@ namespace Unity.Cloud.Draco.Codec
             var numProcessedSignedComponents = 0;
             for (var i = 0; i < NumAttributes; ++i)
             {
-                var attribute = m_Decoder->geometry->GetAttribute(GetAttributeId(new LocalAttributeId(i)));
-                switch (attribute->dataType)
+                ref var attribute = ref m_Decoder->geometry->GetAttribute(GetAttributeId(new LocalAttributeId(i)));
+                switch (attribute.dataType)
                 {
                     case DataType.Int32:
                     case DataType.Int16:
                     case DataType.Int8:
-                        if (!TransformAttributeBackToSignedType(attribute, numProcessedSignedComponents))
+                        if (!TransformAttributeBackToSignedType(ref attribute, numProcessedSignedComponents))
                         {
                             return false;
                         }
-                        numProcessedSignedComponents += attribute->numComponents;
+                        numProcessedSignedComponents += attribute.numComponents;
                         break;
                     case DataType.Float32:
                     {
@@ -1019,12 +1035,12 @@ namespace Unity.Cloud.Draco.Codec
                         {
                             return false;
                         }
-                        var numComponents = (int)attribute->numComponents;
+                        var numComponents = (int)attribute.numComponents;
                         var sourceData = (uint*)source->GetAddress(0);
-                        var destination = (float*)attribute->buffer.Ptr;
+                        var destination = (float*)attribute.buffer.Ptr;
                         var minValues = transform.minValues.Ptr;
                         var valueId = 0;
-                        for (var v = 0; v < attribute->numUniqueEntries; ++v)
+                        for (var v = 0; v < attribute.numUniqueEntries; ++v)
                         {
                             for (var c = 0; c < numComponents; ++c)
                             {
@@ -1045,21 +1061,21 @@ namespace Unity.Cloud.Draco.Codec
         /// Mirrors <c>KdTreeAttributesDecoder::TransformAttributeBackToSignedType</c>.
         /// </summary>
         bool TransformAttributeBackToSignedType(
-            PointAttribute* attribute, int numProcessedSignedComponents)
+            ref PointAttribute attribute, int numProcessedSignedComponents)
         {
-            var numComponents = (int)attribute->numComponents;
-            var numValues = attribute->numUniqueEntries;
+            var numComponents = (int)attribute.numComponents;
+            var numValues = attribute.numUniqueEntries;
             var minValues = m_MinSignedValues.Ptr + numProcessedSignedComponents;
             if (numProcessedSignedComponents + numComponents > m_MinSignedValues.Length)
             {
                 return false;
             }
 
-            switch (attribute->dataType)
+            switch (attribute.dataType)
             {
                 case DataType.Int32:
                 {
-                    var data = (uint*)attribute->buffer.Ptr;
+                    var data = (uint*)attribute.buffer.Ptr;
                     for (var v = 0; v < numValues; ++v)
                     {
                         for (var c = 0; c < numComponents; ++c)
@@ -1077,7 +1093,7 @@ namespace Unity.Cloud.Draco.Codec
                 }
                 case DataType.Int16:
                 {
-                    var data = (ushort*)attribute->buffer.Ptr;
+                    var data = (ushort*)attribute.buffer.Ptr;
                     for (var v = 0; v < numValues; ++v)
                     {
                         for (var c = 0; c < numComponents; ++c)
@@ -1091,7 +1107,7 @@ namespace Unity.Cloud.Draco.Codec
                 }
                 case DataType.Int8:
                 {
-                    var data = attribute->buffer.Ptr;
+                    var data = attribute.buffer.Ptr;
                     for (var v = 0; v < numValues; ++v)
                     {
                         for (var c = 0; c < numComponents; ++c)

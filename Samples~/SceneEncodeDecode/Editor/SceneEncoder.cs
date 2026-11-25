@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Unity.Cloud.Draco.Encode;
 using UnityEditor;
@@ -172,7 +171,9 @@ namespace Unity.Cloud.Draco.Sample.SceneEncodeDecode.Editor
 
             if (setupMeshDecoder)
             {
-                meshDecoder.instances = instances.Values.ToArray();
+                var decodeInstances = new DecodeInstance[instances.Count];
+                instances.Values.CopyTo(decodeInstances, 0);
+                meshDecoder.instances = decodeInstances;
             }
         }
     }

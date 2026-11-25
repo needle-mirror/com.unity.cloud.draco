@@ -15,7 +15,7 @@ namespace Unity.Cloud.Draco
         public NativeAttribute Value { get; private set; }
 
         /// <summary>True when this instance refers to an actual attribute.</summary>
-        public readonly bool IsValid => Value.privateAttribute != null;
+        public readonly bool IsValid => Value.attributeId.IsValid;
 
         public DracoAttributeInstance(in NativeAttribute attribute)
         {

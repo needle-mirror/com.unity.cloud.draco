@@ -171,12 +171,12 @@ namespace Unity.Cloud.Draco
                 return false;
             }
             var geometry = (DecodedGeometry*)mesh->privateMesh;
-            var attribute = geometry->GetNamedAttribute(type, index);
-            if (attribute == null)
+            var attributeId = geometry->GetNamedAttributeId(type, index);
+            if (!geometry->HasAttribute(attributeId))
             {
                 return false;
             }
-            descriptor = CreateAttributeDescriptor(attribute);
+            descriptor = CreateAttributeDescriptor(geometry, attributeId);
             return true;
         }
 
@@ -196,24 +196,25 @@ namespace Unity.Cloud.Draco
                 return false;
             }
             var geometry = (DecodedGeometry*)mesh->privateMesh;
-            var attribute = geometry->GetAttributeByUniqueId((uint)uniqueId);
-            if (attribute == null)
+            var attributeId = geometry->GetAttributeIdByUniqueId((uint)uniqueId);
+            if (!geometry->HasAttribute(attributeId))
             {
                 return false;
             }
-            descriptor = CreateAttributeDescriptor(attribute);
+            descriptor = CreateAttributeDescriptor(geometry, attributeId);
             return true;
         }
 
-        static NativeAttribute CreateAttributeDescriptor(PointAttribute* attribute)
+        static NativeAttribute CreateAttributeDescriptor(DecodedGeometry* geometry, AttributeId attributeId)
         {
+            ref var attribute = ref geometry->GetAttribute(attributeId);
             return new NativeAttribute
             {
-                attributeType = attribute->attributeType,
-                dataType = attribute->dataType,
-                numComponents = attribute->numComponents,
-                uniqueId = (int)attribute->uniqueId,
-                privateAttribute = attribute
+                attributeType = attribute.attributeType,
+                dataType = attribute.dataType,
+                numComponents = attribute.numComponents,
+                uniqueId = (int)attribute.uniqueId,
+                attributeId = attributeId
             };
         }
 
@@ -320,18 +321,18 @@ namespace Unity.Cloud.Draco
                 return false;
             }
             var geometry = (DecodedGeometry*)mesh->privateMesh;
-            var attribute = (PointAttribute*)attributeDescriptor.privateAttribute;
-            if (attribute == null)
+            if (!geometry->HasAttribute(attributeDescriptor.attributeId))
             {
                 return false;
             }
+            ref var attribute = ref geometry->GetAttribute(attributeDescriptor.attributeId);
 
-            var componentSize = DataTypeUtils.DataTypeLength(attribute->dataType);
+            var componentSize = DataTypeUtils.DataTypeLength(attribute.dataType);
             if (componentSize <= 0)
             {
                 return false;
             }
-            var numComponents = attribute->numComponents;
+            var numComponents = attribute.numComponents;
             if (numComponents < 1 || numComponents > 4)
             {
                 return false;
@@ -348,10 +349,10 @@ namespace Unity.Cloud.Draco
             var success = true;
             for (var i = 0; i < numPoints; ++i)
             {
-                var valueIndex = attribute->MappedIndex(i);
-                var source = attribute->GetAddress(valueIndex);
+                var valueIndex = attribute.MappedIndex(i);
+                var source = attribute.GetAddress(valueIndex);
                 // The reference implementation validates every component address.
-                if (!attribute->IsAddressValid(source + entrySize - componentSize))
+                if (!attribute.IsAddressValid(source + entrySize - componentSize))
                 {
                     success = false;
                     break;
@@ -362,7 +363,7 @@ namespace Unity.Cloud.Draco
             if (success && flip)
             {
                 SpaceConversion.Convert(
-                    destination, numPoints, strideBytes, numComponents, attribute->dataType);
+                    destination, numPoints, strideBytes, numComponents, attribute.dataType);
             }
 
             if (!success)
@@ -373,7 +374,7 @@ namespace Unity.Cloud.Draco
 
             data = new NativeData
             {
-                dataType = attribute->dataType,
+                dataType = attribute.dataType,
                 data = (IntPtr)destination
             };
             return true;

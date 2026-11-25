@@ -55,10 +55,11 @@ namespace Unity.Cloud.Draco.Codec
         /// The geometry's attributes, stored by value. An <see cref="AttributeId"/> is an index into this list.
         /// </summary>
         /// <remarks>
-        /// Every attribute is appended by <c>DecodeAttributesDecoderData</c> before any decoder is initialized, and
-        /// nothing appends afterwards, so addresses taken from here stay valid for the rest of the decode. The
-        /// decoder-owned portable attributes are deliberately *not* in this list: they are created during decoding,
-        /// so appending them here would reallocate and dangle the pointers the attribute decoders hold.
+        /// Appending reallocates the list and moves every attribute, so element addresses are not stable while
+        /// attributes are still being added (each attributes decoder appends its own during
+        /// <c>DecodeAttributesDecoderData</c>). Don't keep pointers or references into this list across that phase;
+        /// store the <see cref="AttributeId"/> and resolve it with <see cref="GetAttribute"/> where needed.
+        /// The decoder-owned portable attributes are deliberately *not* in this list.
         /// </remarks>
         UnsafeList<PointAttribute> m_Attributes;
 
@@ -98,18 +99,26 @@ namespace Unity.Cloud.Draco.Codec
         }
 
         /// <summary>
-        /// Returns an attribute by index.
+        /// Checks whether an attribute index is in range.
         /// </summary>
         /// <param name="attributeId">Attribute index.</param>
-        /// <returns>Pointer to the attribute, or null when out of range.</returns>
+        /// <returns>True if <paramref name="attributeId"/> refers to an existing attribute.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public PointAttribute* GetAttribute(AttributeId attributeId)
+        public bool HasAttribute(AttributeId attributeId)
         {
-            if (!attributeId.IsValid || attributeId.value >= m_Attributes.Length)
-            {
-                return null;
-            }
-            return m_Attributes.Ptr + attributeId.value;
+            return attributeId.IsValid && attributeId.value < m_Attributes.Length;
+        }
+
+        /// <summary>
+        /// Returns a reference to an attribute by index. It's a reference rather than a pointer on purpose: it can't
+        /// be stored in a field, so it can't outlive a reallocation of the attribute list. Keep it in a local only.
+        /// </summary>
+        /// <param name="attributeId">Attribute index. Must satisfy <see cref="HasAttribute"/>.</param>
+        /// <returns>Reference to the attribute.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref PointAttribute GetAttribute(AttributeId attributeId)
+        {
+            return ref m_Attributes.ElementAt(attributeId.value);
         }
 
         /// <summary>
@@ -124,8 +133,7 @@ namespace Unity.Cloud.Draco.Codec
             var count = 0;
             for (var i = 0; i < m_Attributes.Length; ++i)
             {
-                var attribute = m_Attributes.Ptr + i;
-                if (attribute->attributeType != type)
+                if (m_Attributes.ElementAt(i).attributeType != type)
                 {
                     continue;
                 }
@@ -139,35 +147,21 @@ namespace Unity.Cloud.Draco.Codec
         }
 
         /// <summary>
-        /// Returns the n-th attribute of a given type.
-        /// Mirrors <c>PointCloud::GetNamedAttribute</c>.
-        /// </summary>
-        /// <param name="type">Attribute type.</param>
-        /// <param name="index">Index among the attributes of that type.</param>
-        /// <returns>Pointer to the attribute, or null when not found.</returns>
-        public PointAttribute* GetNamedAttribute(AttributeType type, int index = 0)
-        {
-            var id = GetNamedAttributeId(type, index);
-            return id.IsValid ? GetAttribute(id) : null;
-        }
-
-        /// <summary>
-        /// Returns the attribute with the given unique identifier.
-        /// Mirrors <c>PointCloud::GetAttributeByUniqueId</c>.
+        /// Returns the index of the attribute with the given unique identifier.
+        /// Mirrors <c>PointCloud::GetAttributeIdByUniqueId</c>.
         /// </summary>
         /// <param name="uniqueId">Unique identifier.</param>
-        /// <returns>Pointer to the attribute, or null when not found.</returns>
-        public PointAttribute* GetAttributeByUniqueId(uint uniqueId)
+        /// <returns>Attribute index, or -1 when not found.</returns>
+        public AttributeId GetAttributeIdByUniqueId(uint uniqueId)
         {
             for (var i = 0; i < m_Attributes.Length; ++i)
             {
-                var attribute = m_Attributes.Ptr + i;
-                if (attribute->uniqueId == uniqueId)
+                if (m_Attributes.ElementAt(i).uniqueId == uniqueId)
                 {
-                    return attribute;
+                    return new AttributeId(i);
                 }
             }
-            return null;
+            return AttributeId.Invalid;
         }
 
         /// <summary>

@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 namespace Unity.Cloud.Draco
 {
     [StructLayout(LayoutKind.Sequential)]
-    unsafe struct NativeAttribute
+    struct NativeAttribute
     {
         // ReSharper disable MemberCanBePrivate.Local
         public AttributeType attributeType;
@@ -16,8 +16,18 @@ namespace Unity.Cloud.Draco
         public int uniqueId;
         // ReSharper restore MemberCanBePrivate.Local
         /// <summary>
-        /// Pointer to the decoded <see cref="Codec.PointAttribute"/> that backs this attribute.
+        /// Attribute index plus one, so that a default descriptor refers to no attribute.
         /// </summary>
-        public void* privateAttribute;
+        int m_AttributeIdPlusOne;
+
+        /// <summary>
+        /// Index of the decoded <see cref="Codec.PointAttribute"/> within the mesh's geometry.
+        /// Invalid for a default descriptor.
+        /// </summary>
+        public Codec.AttributeId attributeId
+        {
+            readonly get => new Codec.AttributeId(m_AttributeIdPlusOne - 1);
+            set => m_AttributeIdPlusOne = value.value + 1;
+        }
     }
 }
